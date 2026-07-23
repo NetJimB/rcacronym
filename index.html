@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RC Acronyms</title>
+<style>
+  :root{
+    --bg: #000000;
+    --fg: #ffffff;
+    --sub: #9a9a9a;
+    --card: #141414;
+    --border: #2a2a2a;
+    --accent: #cc1f2c;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overscroll-behavior: none;
+    transition: background .2s ease, color .2s ease;
+  }
+  #app{ min-height:100vh; display:flex; flex-direction:column; }
+
+  header{
+    position:sticky; top:0; z-index:20;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 16px 12px;
+  }
+  .header-top{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom: 12px;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .cross{
+    width:22px; height:22px; position:relative; flex-shrink:0;
+  }
+  .cross::before, .cross::after{
+    content:""; position:absolute; background: var(--accent);
+  }
+  .cross::before{ left:9px; top:0; width:4px; height:22px; }
+  .cross::after{ top:9px; left:0; height:4px; width:22px; }
+  h1{ font-size:17px; font-weight:700; letter-spacing:.2px; margin:0; }
+  .sub{ font-size:11px; color:var(--sub); margin-top:1px; }
+
+  .dots-btn{
+    background:none; border:none; color:var(--fg); font-size:22px;
+    padding:6px 10px; cursor:pointer; border-radius:8px; line-height:1;
+  }
+  .dots-btn:active{ background: var(--card); }
+
+  main{ flex:1; padding: 14px 16px 40px; }
+
+  .search-wrap{ position:relative; margin-bottom:0; display:flex; gap:8px; align-items:stretch; }
+  .search-input-wrap{ position:relative; flex:1; min-width:0; }
+  #search{
+    width:100%; padding:14px 40px 14px 16px; font-size:16px;
+    background: var(--card); color: var(--fg);
+    border:1px solid var(--border); border-radius:12px;
+    outline:none; box-sizing:border-box;
+  }
+  #search::placeholder{ color: var(--sub); }
+  #search:focus{ border-color: var(--accent); }
+
+  .clear-btn{
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    width:28px; height:28px; border-radius:50%; border:none;
+    background:none; color:var(--sub); font-size:16px; cursor:pointer;
+    display:none; align-items:center; justify-content:center; line-height:1;
+  }
+  .clear-btn.show{ display:flex; }
+  .clear-btn:active{ background: rgba(128,128,128,.2); }
+
+  .fav-filter{
+    flex-shrink:0; width:48px; font-size:20px; cursor:pointer;
+    background: var(--card); color: var(--sub);
+    border:1px solid var(--border); border-radius:12px;
+  }
+  .fav-filter.active{ color: var(--accent); border-color: var(--accent); }
+
+  .star-btn{
+    background:none; border:none; font-size:18px; cursor:pointer;
+    color: var(--sub); padding:0 2px; line-height:1;
+  }
+  .star-btn.on{ color: var(--accent); }
+
+  .count{ font-size:12px; color:var(--sub); margin: 0 2px 10px; }
+  #results{ padding-top:14px; }
+
+  .entry{
+    background: var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:14px 16px; margin-bottom:10px;
+  }
+  .entry-top{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .term{ font-size:16px; font-weight:700; letter-spacing:.3px; }
+  .entry-actions{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .entry-actions-top{ display:flex; align-items:center; gap:10px; }
+  .del, .edit-btn{ background:none; border:none; color:var(--sub); font-size:12px; cursor:pointer; padding:2px 4px; }
+  .edit-btn{ color: var(--accent); }
+  .def{ font-size:14px; color: var(--fg); opacity:.92; margin-top:6px; line-height:1.4; }
+  .links{ margin-top:8px; display:flex; flex-wrap:wrap; gap:8px; }
+  .links a{ font-size:12.5px; color: var(--accent); text-decoration:none; border-bottom:1px solid currentColor; }
+
+  .empty{ text-align:center; color:var(--sub); padding: 60px 20px; font-size:14px; line-height:1.5; }
+
+  /* Add button */
+  .fab{
+    position:fixed; right:18px; bottom:24px; z-index:15;
+    width:52px; height:52px; border-radius:50%;
+    background: var(--accent); color:#fff; border:none;
+    font-size:26px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.4);
+    display:none; align-items:center; justify-content:center;
+  }
+
+  /* Settings sheet */
+  .overlay{
+    position:fixed; inset:0; background: rgba(0,0,0,.55);
+    z-index:30; display:none;
+  }
+  .overlay.show{ display:block; }
+  .sheet{
+    position:fixed; right:10px; top:56px; z-index:31;
+    background: var(--card); border:1px solid var(--border);
+    border-radius:14px; width: 240px; overflow:hidden;
+    transform: translateY(-8px); opacity:0; pointer-events:none;
+    transition: all .15s ease;
+  }
+  .sheet.show{ transform: translateY(0); opacity:1; pointer-events:auto; }
+  .sheet-title{ font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--sub); padding:12px 14px 4px; }
+  .theme-opt{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 14px; cursor:pointer; border-top:1px solid var(--border);
+  }
+  .theme-opt:active{ background: rgba(255,255,255,.06); }
+  .swatch{ width:22px; height:22px; border-radius:6px; border:1px solid rgba(255,255,255,.25); flex-shrink:0; }
+  .theme-name{ font-size:14px; }
+  .theme-check{ margin-left:auto; font-size:14px; color: var(--accent); visibility:hidden; }
+  .theme-opt.active .theme-check{ visibility:visible; }
+
+  /* Add entry modal */
+  .modal-overlay{
+    position:fixed; inset:0; background: rgba(0,0,0,.65);
+    z-index:40; display:none; align-items:flex-end;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal{
+    background: var(--card); width:100%; border-radius:18px 18px 0 0;
+    padding: 18px 18px 26px; border-top:1px solid var(--border);
+    max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+  }
+  .modal h2{ font-size:16px; margin:0 0 14px; }
+  .field-label{ font-size:12px; color:var(--sub); margin: 12px 0 6px; }
+  .field-label:first-of-type{ margin-top:0; }
+  .modal input, .modal textarea{
+    width:100%; background: var(--bg); color: var(--fg);
+    border:1px solid var(--border); border-radius:10px;
+    padding:11px 12px; font-size:15px; font-family:inherit; outline:none;
+  }
+  .modal textarea{ resize:vertical; min-height:60px; }
+  .modal input:focus, .modal textarea:focus{ border-color: var(--accent); }
+  .modal-actions{ display:flex; gap:10px; margin-top:18px; }
+  .btn{ flex:1; padding:12px; border-radius:10px; border:none; font-size:15px; font-weight:600; cursor:pointer; }
+  .btn-cancel{ background: transparent; color: var(--sub); border:1px solid var(--border); }
+  .btn-save{ background: var(--accent); color:#fff; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="header-top">
+      <div class="brand">
+        <div class="cross"></div>
+        <div>
+          <h1>RC Acronyms</h1>
+          <div class="sub" id="entryCountLabel">loading…</div>
+        </div>
+      </div>
+      <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
+    </div>
+    <div class="search-wrap">
+      <div class="search-input-wrap">
+        <input id="search" type="text" placeholder="Search acronym or definition… (comma to search multiple)" autocomplete="off" />
+        <button class="clear-btn" id="clearBtn" aria-label="Clear search">✕</button>
+      </div>
+      <button class="fav-filter" id="favFilter" aria-label="Show favorites only">☆</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="results"></div>
+  </main>
+
+  <button class="fab" id="addBtn" aria-label="Add entry">+</button>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-title">Background</div>
+  <div class="theme-opt" data-theme="black">
+    <div class="swatch" style="background:#000;"></div>
+    <div class="theme-name" style="color:#fff;">Black / White</div>
+    <div class="theme-check">✓</div>
+  </div>
+  <div class="theme-opt" data-theme="blue">
+    <div class="swatch" style="background:#0b3d91;"></div>
+    <div class="theme-name" style="color:#e6e6e6;">Blue / Yellow</div>
+    <div class="theme-check">✓</div>
+  </div>
+  <div class="theme-opt" data-theme="white">
+    <div class="swatch" style="background:#fff; border-color:#ccc;"></div>
+    <div class="theme-name" style="color:#e6e6e6;">White / Black</div>
+    <div class="theme-check">✓</div>
+  </div>
+  <div class="sheet-title" style="border-top:1px solid var(--border); margin-top:4px; padding-top:12px;">Admin</div>
+  <div class="theme-opt" id="adminRow">
+    <div class="theme-name" id="adminRowLabel" style="color:#fff;">Log in as Admin</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="loginModalOverlay">
+  <div class="modal">
+    <h2>Admin login</h2>
+    <div class="field-label">Password</div>
+    <input id="fPassword" type="password" placeholder="Password" autocomplete="off" />
+    <div class="modal-actions">
+      <button class="btn btn-cancel" id="loginCancelBtn">Cancel</button>
+      <button class="btn btn-save" id="loginSaveBtn">Log in</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Add acronym</h2>
+    <div class="field-label">Acronym</div>
+    <input id="fTerm" type="text" placeholder="e.g. RC" />
+    <div class="field-label">Definition</div>
+    <textarea id="fDef" placeholder="e.g. Red Cross"></textarea>
+    <div class="field-label">Link (optional)</div>
+    <input id="fLink" type="text" placeholder="https://…" />
+    <div class="modal-actions">
+      <button class="btn btn-cancel" id="cancelBtn">Cancel</button>
+      <button class="btn btn-save" id="saveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script id="doc-batch-data" type="application/json">
+[{"term": "AA", "def": "Abbreviations and ARCronyms"}, {"term": "AABB", "def": "American Association of Blood Banks"}, {"term": "AACN", "def": "American Association of Colleges of Nursing"}, {"term": "AACR", "def": "Animal-Assisted Crisis Response"}, {"term": "AAMFT", "def": "American Association for Marriage and Family Therapy"}, {"term": "A&P", "def": "Architecture and Planning"}, {"term": "AAPC", "def": "American Association of Pastoral Counselors"}, {"term": "AAR", "def": "After Action Report / Association of American Railroads / After Action Review"}, {"term": "AATMRG", "def": "African-American Team Member / Resource Group"}, {"term": "ABC", "def": "Airway, Breathing, and Circulation / American Baptist Churches / America’s Blood Centers / Availability by Country"}, {"term": "ABF", "def": "All Bond Fund"}, {"term": "ABMTR", "def": "Autologous Blood and Marrow / Transplant Registry"}, {"term": "ABO", "def": "A-B-O Blood Groups"}, {"term": "AC", "def": "Administrative Coordinator"}, {"term": "ACA", "def": "American Counseling Association"}, {"term": "ACCT", "def": "Advanced Child Care Training"}, {"term": "ACEP", "def": "American College of Emergency Physicians"}, {"term": "ACFASP", "def": "Advisory Council on First Aid, Aquatics, / Safety and Preparedness"}, {"term": "ACFS", "def": "Annual Chapter Financial Statement"}, {"term": "ACH", "def": "Automated Clearing House"}, {"term": "ACLS", "def": "Advanced Cardiac Life Support"}, {"term": "ACPE", "def": "Association for Clinical Pastoral Education"}, {"term": "ACQ", "def": "Acquisition"}, {"term": "ACS", "def": "Alternate Care Site Adventist Community / Services"}, {"term": "ACT", "def": "Assertive Community Treatment Teams / Activated Clotting Time"}, {"term": "AD", "def": "Assistant Director"}, {"term": "ADA", "def": "Americans with Disabilities Act of 1990"}, {"term": "ADD", "def": "Attention-Deficit Disorder"}, {"term": "ADGP", "def": "Annual Disaster Giving Program"}, {"term": "ADHD", "def": "Attention-Deficit Hyperactivity Disorder"}, {"term": "ADL", "def": "Activities of Daily Living / Advanced Distributed Learning / Adverse Determination Letter"}, {"term": "ADS", "def": "Archival Document System / Activity Detail Sheet"}, {"term": "ADU", "def": "Automated Data Upload"}, {"term": "ADVANCE", "def": "Assessing Donor Variability and / New Concepts of Eligibility"}, {"term": "AE", "def": "Annual Enrollment"}, {"term": "AED", "def": "Automated External Defibrillator"}, {"term": "AEM", "def": "International Association of Emergency / Managers"}, {"term": "AER", "def": "Army Emergency Relief"}, {"term": "AFES", "def": "Armed Forces Emergency Services"}, {"term": "AFN", "def": "Access and Functional Needs"}, {"term": "AHH", "def": "Automated Health History"}, {"term": "AHJ", "def": "Agency Having Jurisdiction"}, {"term": "AIDS", "def": "Acquired Immune Deficiency Syndrome"}, {"term": "AIM", "def": "Audience, Intent, Message"}, {"term": "AIR", "def": "Aviation Incident Response"}, {"term": "AIRS", "def": "Alliance of Information and Referral Systems"}, {"term": "AJN", "def": "American Journal of Nursing"}, {"term": "ALL8", "def": "Pillar and Core Processes"}, {"term": "ALS", "def": "Amyotrophic Lateral Sclerosis / (Lou Gehrig’s Disease) / Advanced Life Support"}, {"term": "AM", "def": "Administrator / Account Manager"}, {"term": "AMCROSS", "def": "American Red Cross"}, {"term": "AMEE", "def": "Asia / Middle East / Europe"}, {"term": "AMRC", "def": "American Red Cross"}, {"term": "AMURT", "def": "Ananda Marga Universal Relief Team"}, {"term": "ANC", "def": "Absolute Neutrophile Count"}, {"term": "ANCC", "def": "American Nurses Credentialing Center"}, {"term": "ANSI", "def": "American National Standards Institute"}, {"term": "AOP", "def": "Advance Operational Plan"}, {"term": "AOR", "def": "Area of Response"}, {"term": "AP", "def": "Authorized Provider / Analysis and Planning / Action Program / Associated Press / Action Program Codes"}, {"term": "APA", "def": "American Psychological Association"}, {"term": "APAT", "def": "Advance Public Affairs Team"}, {"term": "APHIS", "def": "Animal and Plant Health Inspection Service"}, {"term": "API", "def": "Application Programing Interface"}, {"term": "APL", "def": "Advertising and Promotional Labeling"}, {"term": "APM", "def": "Acceptable Performance Method"}, {"term": "APMS", "def": "Automated Problem Management System"}, {"term": "APN", "def": "American Psychological Association"}, {"term": "APO", "def": "Average Units Collected Per Operation"}, {"term": "APS", "def": "Acquisition, Planning and Scheduling"}, {"term": "AQL", "def": "Acceptable Quality Level"}, {"term": "AR", "def": "Annual Report"}, {"term": "ARC", "def": "American Refugee Committee *DO NOT USE / FOR OUR ORGANIZATION - THIS IS A REGISTERED / TRADEMARK OF ANOTHER NONPROFIT*"}, {"term": "ARCBS", "def": "American Red Cross Biomedical Services / ARCBS PIP. American Red Cross Biomedical Services / Pandemic Influenza Plan"}, {"term": "ARCC", "def": "Annual Red Cross Contribution"}, {"term": "ARCDCWAS1FS1", "def": "National Headquarters File Server"}, {"term": "ARCOA", "def": "American Red Cross Overseas Association / ARC NHQ AGOL . American Red Cross National / Headquarters ArcGIS Online"}, {"term": "ARCVLSC", "def": "American Red Cross Volunteer / Life Saving Corps"}, {"term": "ARES", "def": "Amateur Radio Emergency Services"}, {"term": "ARF", "def": "Action Request Form"}, {"term": "ARNP", "def": "Advanced Registered Nurse Practitioner"}, {"term": "ARRL", "def": "American Radio Relay League"}, {"term": "ASAP", "def": "As Soon as Possible"}, {"term": "ASC", "def": "Assistance and Support Center"}, {"term": "ASCE", "def": "American Society of Civil Engineers"}, {"term": "ASL", "def": "American Sign Language / Academic Service Learning"}, {"term": "ASM", "def": "Assistant Station Manager"}, {"term": "ASR", "def": "Annual Safety Refresher Training"}, {"term": "ATA", "def": "Actual Time of Arrival / Analog Telephone Adapter"}, {"term": "ATD", "def": "Actual Time of Departure"}, {"term": "ATG", "def": "Online Transaction Processing Vendor"}, {"term": "ATLAS", "def": "Alliance for Technology Linking All Services"}, {"term": "ATO", "def": "Additional Time Off Adjusted Time Off"}, {"term": "ATS", "def": "Applicant Tracking System"}, {"term": "AUTO", "def": "Autologous"}, {"term": "AWB", "def": "Air Way Bill"}, {"term": "AWG", "def": "Align With Government"}, {"term": "BAT", "def": "Basic Aid Training"}, {"term": "BP", "def": "Bloodborne Pathogen"}, {"term": "BBR", "def": "Building a Better Response"}, {"term": "BCC", "def": "Behavior Change Communications"}, {"term": "BCEM", "def": "Big City Emergency Managers"}, {"term": "BCLC", "def": "Business Civic Leadership Center"}, {"term": "BD", "def": "Bulk Distribution"}, {"term": "BDC", "def": "Blood Drive Coordinator / Building Collapse"}, {"term": "BDLS", "def": "Basic Disaster Life Support"}, {"term": "BDR", "def": "Blood Donation Record"}, {"term": "BDSU", "def": "Bulk Distribution Support Unit"}, {"term": "BEIS", "def": "Biomedical Enterprise Information Systems"}, {"term": "BEMA", "def": "Black Emergency Managers Association"}, {"term": "BHQ", "def": "Biomedical Services Headquarters"}, {"term": "BI", "def": "Before Image Business Intelligence"}, {"term": "BIA", "def": "Bureau of Indian Affairs"}, {"term": "BIS", "def": "Biomedical Information Systems"}, {"term": "BIST", "def": "Basic Instructor Specialty Training, / Biomedical Information Systems Test / Engineering"}, {"term": "BITC", "def": "Biomedical Instructor Training Course / BIT QRM. Biomedical Information Quality and / Regulatory Management"}, {"term": "BITS", "def": "Biomedical Integrated Training System / BITS LMS. Biomedical Integrated Training System / Learning Management System"}, {"term": "BLA", "def": "Biologics License Application"}, {"term": "BLI", "def": "Blizzards, Snow, Hail, or Ice Storm"}, {"term": "BLS", "def": "Basic Life Support Basic Life Saving"}, {"term": "B-NICE", "def": "Biological, Nuclear, Incendiary, / Chemical, Explosive"}, {"term": "BOG", "def": "Board of Governors Break Out Group"}, {"term": "BOL", "def": "Bill of Lading"}, {"term": "BOLO", "def": "Be on the Lookout"}, {"term": "BOO", "def": "Base of Operations"}, {"term": "BPAC", "def": "Blood Products Advisory Committee"}, {"term": "BPD", "def": "Biological Product Deviation"}, {"term": "BPO", "def": "Blanket Purchase Order"}, {"term": "BPS", "def": "Best Practices System"}, {"term": "BRACES", "def": "Building Resilient African Communities"}, {"term": "BRC", "def": "Business Response Center"}, {"term": "BRCR", "def": "Be Red Cross Ready"}, {"term": "BRL", "def": "Biomedical Regulatory Line"}, {"term": "BRM", "def": "Business Reply Mail"}, {"term": "BSD", "def": "Blood Services Directive"}, {"term": "BSI", "def": "Body Substance Isolation Blood Systems, Inc."}, {"term": "BSL", "def": "Blood Services Letter"}, {"term": "BSOC", "def": "Biomedical Service Operations Center"}, {"term": "BTS", "def": "Back to Sender"}, {"term": "BUG", "def": "Business Unit Guidance"}, {"term": "BVM", "def": "Bag-valve-mask Resuscitator / Biomed Volunteer Manager"}, {"term": "BVWE", "def": "Biomed Volunteer Workforce Engagement"}, {"term": "BX", "def": "Box"}, {"term": "BYOD", "def": "Bring Your Own Device"}, {"term": "C", "def": "Centigrade"}, {"term": "CAC", "def": "Client Assistance Card"}, {"term": "CAD", "def": "Computer Assisted Dispatch"}, {"term": "CAIR", "def": "Critical Incident Response Team"}, {"term": "CAM", "def": "Cost Analysis Model Client Assistance / Manual."}, {"term": "CAMS", "def": "Central Alarm Monitoring System"}, {"term": "CAN", "def": "Coordinated Assistance Network / Change Advocate Network / Consolidated Assistance Network"}, {"term": "CAP", "def": "Controlled Access Point Corrective Action Plan / Community Adaptation Program"}, {"term": "CAPA", "def": "Corrective and Preventative Action"}, {"term": "CAPSS", "def": "Customer and Partners Survey System"}, {"term": "CART", "def": "Communication Access Real-time Translation / County Animal Response Team"}, {"term": "CASI", "def": "Computer-Assisted Self-Interview"}, {"term": "CAT", "def": "Chemical Assessment Team / Contract Administration Team"}, {"term": "CBC", "def": "Community Blood Center"}, {"term": "CBER", "def": "Center for Biologics Evaluation and Research"}, {"term": "CBE-30", "def": "Changes Being Enacted in 30 Days"}, {"term": "CBFCU", "def": "Clara Barton Federal Credit Union"}, {"term": "CBHFA", "def": "Community-Based Health and First Aid"}, {"term": "CBO", "def": "Community Based Organization / Chapter Board Orientation"}, {"term": "CBP", "def": "Customs and Border Patrol"}, {"term": "CBRNE", "def": "Chemical, Biological, Radioactive, Nuclear, or Explosive"}, {"term": "CBS", "def": "Choice-Based Services"}, {"term": "CBU", "def": "Customer Business Unit"}, {"term": "CBV", "def": "Community Based Volunteer"}, {"term": "CBW", "def": "Chemical and Biological Warfare / Capacity Building Workbook"}, {"term": "CC", "def": "Client Casework Coordinating Chapter / Cross Connection"}, {"term": "CCC", "def": "Client Care Chief"}, {"term": "CCE", "def": "Community Chapter Executive"}, {"term": "CCFIN", "def": "Country/Collection Facility Identification / Number"}, {"term": "CCI", "def": "Chapter Chair Institute / Corrected Count Increment"}, {"term": "CCL", "def": "Concern Connection Line"}, {"term": "CCP", "def": "Critical Care Point Client Care Program"}, {"term": "CCS", "def": "Cultural Competency Series / Center for Cellular Services / Critical Community Services"}, {"term": "CCV", "def": "Commercial Co-Venture"}, {"term": "CDAF", "def": "Channel Design Account File"}, {"term": "CDAP", "def": "Chapter Donor Acquisition Program"}, {"term": "CDBG", "def": "Community Development Block Grant"}, {"term": "CDC", "def": "Center for Disease Control and Prevention"}, {"term": "C-D-C", "def": "Cover-Distance-Clean"}, {"term": "CDE", "def": "Community Disaster Education"}, {"term": "CDHP", "def": "Consumer Driven Health Plan"}, {"term": "CDIS", "def": "Components and Distribution / Information System"}, {"term": "CDL", "def": "Community Development Leader"}, {"term": "CDM", "def": "Chapter Upload Process"}, {"term": "CDO", "def": "Chapter Development Officer"}, {"term": "CDP", "def": "Customer Donation Program"}, {"term": "CDPX", "def": "Community Disaster Program Manager or / Specialist"}, {"term": "CDR", "def": "Christian Disaster Response"}, {"term": "CDRA", "def": "Chapter Disaster Readiness Assessment"}, {"term": "CDRC", "def": "Conference Disaster Response Coordinator"}, {"term": "CDREE", "def": "Chapter Disaster Readiness Exercise and / Evaluation"}, {"term": "CDRH", "def": "Center for Devices and Radiological Health"}, {"term": "CDRM", "def": "Crisis, Disaster and Risk Management"}, {"term": "CDRP", "def": "Consolidated Direct Response Program"}, {"term": "CDS", "def": "Children’s Disaster Services"}, {"term": "CDT", "def": "Central Daylight Time"}, {"term": "CDV", "def": "Coordinator of Disaster Volunteers"}, {"term": "CE", "def": "Continuing Education"}, {"term": "CEA", "def": "Community Engagement and Accountability"}, {"term": "CEB", "def": "Corporate Executive Board"}, {"term": "CECC", "def": "Center of Excellence for Corporate / Compliance"}, {"term": "CEESD", "def": "Collaborating to Ensure Effective / Service Delivery"}, {"term": "CEI", "def": "Chapter Executive Institute"}, {"term": "CEM", "def": "Certified Emergency Manager"}, {"term": "CEMP", "def": "Comprehensive Emergency / Management Plan"}, {"term": "CEO", "def": "Chief Elected Official / Chief Executive Officer [Regional Executive]"}, {"term": "CEP", "def": "Community Engagement and Partnerships"}, {"term": "CER", "def": "Claim Experience Report"}, {"term": "CERP", "def": "Collections Equipment Refresh Program"}, {"term": "CERT", "def": "Community Emergency Response Team"}, {"term": "CEU", "def": "Continuing Education Unit / Continuing Education for / Laboratory Professionals"}, {"term": "CFC", "def": "Combined Federal Campaign"}, {"term": "CFR", "def": "Case-Fatality Rates Code of / Federal Regulations"}, {"term": "CFRE", "def": "Certified Fund-Raising Executive"}, {"term": "CFS", "def": "Consolidated Financial System"}, {"term": "CFY", "def": "Current Fiscal Year"}, {"term": "CH", "def": "Chief"}, {"term": "CHAMPLE", "def": "Chief complaint, / History, Allergies, Medication, / Past pertinent history, / Last Meal, Events prior"}, {"term": "CHE", "def": "Complex Humanitarian Emergency"}, {"term": "CHERS", "def": "Chapter Enrollment Reporting System / Chapter Environment Resources System"}, {"term": "CHN", "def": "Community Health Nurse"}, {"term": "CHS", "def": "Community Health Service / Certified Homeland Security / Core Humanitarian Standards"}, {"term": "CHW", "def": "Community Health Worker"}, {"term": "CI", "def": "Confidence Interval Continuous Improvement / Critical Infrastructure"}, {"term": "CIB", "def": "Chapter Information Bulletin"}, {"term": "CIIPA", "def": "Confidential Information and Intellectual / Property Agreement / CIL Center for Independent Living"}, {"term": "CIMS", "def": "Communication Information / Management System / Card Identity Management System"}, {"term": "CIO", "def": "Chief Innovations Office"}, {"term": "CIP", "def": "Compliance Improvement Program / Continuous Improvement Program"}, {"term": "CIR", "def": "Critical Information Requirements"}, {"term": "CISD", "def": "Critical Incident Stress Debriefing"}, {"term": "CISM", "def": "Critical Incident Stress Management"}, {"term": "CITSS", "def": "Corporate IT Services and Support"}, {"term": "CL", "def": "Client Confirmatory Laboratory"}, {"term": "CLIA", "def": "Clinical Laboratory / Improvement Amendments"}, {"term": "CLC", "def": "Creating Leadership Connections / Corporate Lodging Card / Corporate Lodging Consultant"}, {"term": "CLJ", "def": "Continuous Learning Journey"}, {"term": "CLS", "def": "Individual Client Services"}, {"term": "CM", "def": "Communications Corrective Maintenance"}, {"term": "CMC", "def": "Case Management Center"}, {"term": "CMIST", "def": "Communication Maintaining / Independence Services, Support, and Self-Determination"}, {"term": "CMMS", "def": "Computerized Maintenance / Management System"}, {"term": "CMR", "def": "Community Recovery"}, {"term": "CMS", "def": "Consumable Medical Supplies / Content Management System / Care Management System / Centers for Medicare and Medicaid Services"}, {"term": "CNA", "def": "Certified Nursing Assistant"}, {"term": "CNCS", "def": "Corporation for National and / Community Service"}, {"term": "CO", "def": "Computer Operations"}, {"term": "COA", "def": "Chapter Operation Administration"}, {"term": "COAD", "def": "Community Organizations Active in Disaster"}, {"term": "COB", "def": "Close of Business"}, {"term": "COBRA", "def": "Consolidated Omnibus Budget / Reconciliation Act"}, {"term": "COE", "def": "Center of Expertise Chapter of Expertise"}, {"term": "COG", "def": "Continuity of Government"}, {"term": "COI", "def": "Circular of Information"}, {"term": "COLA", "def": "Cost of Living Allowance"}, {"term": "COM", "def": "Community Recovery Communications"}, {"term": "CONOPS", "def": "Concept of Operations"}, {"term": "CONUS", "def": "Continental United States"}, {"term": "COO", "def": "[Regional] Chief Operating Officer"}, {"term": "COOP", "def": "Continuity of Operations Plan"}, {"term": "COP", "def": "Common Operating Picture"}, {"term": "COPPA", "def": "Children’s Online Privacy Protection Act"}, {"term": "COR", "def": "Cultural Orientation Resource"}, {"term": "CORES", "def": "Contract Organization and Retrieval System"}, {"term": "COS", "def": "Chief of Staff"}, {"term": "COTS", "def": "Commercial-off-the-Shelf"}, {"term": "COV", "def": "Chairperson of Volunteers"}, {"term": "COVID-19", "def": "Coronavirus"}, {"term": "CP", "def": "Community Program / Cerebral Palsy / Comparability Protocol"}, {"term": "CPAP", "def": "Continuous Positive Airway Pressure"}, {"term": "CPEP", "def": "Community Preparedness and / Education Program"}, {"term": "CPP", "def": "Cyclone Preparedness Program"}, {"term": "CPR", "def": "Cardiopulmonary Resuscitation / Content, Practice, Review"}, {"term": "CPS", "def": "Community Partnerships / Chapter Performance Standards"}, {"term": "CPUC", "def": "Cost Per Unit Collected"}, {"term": "CRB", "def": "Creative Review Board"}, {"term": "CRC", "def": "Critical Response Childcare / Convention on the Rights of the Child / Community Reception Center"}, {"term": "CRF", "def": "Contract Requisition Form"}, {"term": "CRM", "def": "Customer Relations Management / Candidate Relationship Management"}, {"term": "CRP", "def": "Casework and Recovery Planning / Conference Room Pilot"}, {"term": "CRR", "def": "Cutover Readiness Review"}, {"term": "CRS", "def": "Case Review Scorecard"}, {"term": "CRT", "def": "Critical Response Team"}, {"term": "CRRTT", "def": "Capacity, Readiness, and Response / Training Team"}, {"term": "CRV", "def": "Communication Response Vehicle"}, {"term": "CRWRC", "def": "Christian Reformed World Relief / Committee"}, {"term": "CS", "def": "Customer Service Case"}, {"term": "CSDU", "def": "Certified Service Delivery Unit"}, {"term": "CSOD", "def": "Cornerstone on Demand"}, {"term": "CSS", "def": "Collections Scheduling System"}, {"term": "CST", "def": "Central Standard Time"}, {"term": "CT", "def": "Collections Technician"}, {"term": "CTAP", "def": "Casualty Travel Assistance Program"}, {"term": "CTP", "def": "Cash Transfer Programming"}, {"term": "CTRD", "def": "Cost To Raise a Dollar"}, {"term": "CTS", "def": "Call Tracking System"}, {"term": "CUSI", "def": "Commonly Used Shelter Items"}, {"term": "CV", "def": "Curriculum Vitae Constant Vigilance"}, {"term": "CVA", "def": "Certification in Volunteer Administration"}, {"term": "CVL", "def": "Community Volunteer Leader"}, {"term": "CVOAD", "def": "Community Voluntary Organizations / Active in Disaster"}, {"term": "CW", "def": "Casework"}, {"term": "CWS", "def": "Church World Service"}, {"term": "CWT", "def": "Carlson Wagonlit Travel"}, {"term": "D&G", "def": "Direction and Guidance"}, {"term": "DA", "def": "Disaster Assessment Donor Ambassador"}, {"term": "DAC", "def": "Disaster Application Center / Disaster Assistance Center"}, {"term": "DAD", "def": "Deputy Assistant Director"}, {"term": "DAG", "def": "Donor Ambassador Guidebook"}, {"term": "DAM", "def": "Digital Asset Manager"}, {"term": "DAOP", "def": "DRO Advance Operational Plan"}, {"term": "DARE", "def": "Disaster Administration Report of Expenses"}, {"term": "DART", "def": "Disaster Assistance Response Team / Disaster Animal Response Team / Disaster Arrival Reservation Tool"}, {"term": "DAS", "def": "Disaster Assessment Summary"}, {"term": "DAT", "def": "Disaster Action Team Direct Antiglobulin Test"}, {"term": "DATF", "def": "Damage Assessment Task Force"}, {"term": "DBA", "def": "Division of Blood Applications"}, {"term": "DBMS", "def": "Database Management System"}, {"term": "DCA", "def": "Direct Client Assistance"}, {"term": "DCAFUND", "def": "Direct Client Assistance Fundamentals"}, {"term": "DSCS", "def": "Donor and Client Support Center"}, {"term": "DCM", "def": "Disaster Case Manager"}, {"term": "DCMP", "def": "Disaster Case Management Program"}, {"term": "DCS", "def": "Disaster Cycle Services"}, {"term": "DCSC", "def": "Donor & Client Support Center"}, {"term": "DCT", "def": "Data Collection Tool"}, {"term": "DCWG", "def": "Division Capability Work Group"}, {"term": "DD", "def": "Deputy Director"}, {"term": "DDA", "def": "Detailed Damage Assessment / Debit Authorization Agreement"}, {"term": "DDCOE", "def": "Donor Database Center of Expertise / Donor Database Center of Excellence"}, {"term": "DDD", "def": "Division Disaster Director"}, {"term": "DDE", "def": "Division Disaster Executive"}, {"term": "DDH", "def": "Disaster Distress Helpline"}, {"term": "DDLE", "def": "Directed Donor Limited Exposure"}, {"term": "DDLT", "def": "Division Disaster Leadership Team"}, {"term": "DDO", "def": "Disaster Duty Officer / DDR, Deferred Donor Registry Donor Data Reports"}, {"term": "DDRO", "def": "Director of Disaster Relief Operation"}, {"term": "DDS", "def": "Document Distribution System"}, {"term": "DDSRD", "def": "Division Disaster State Relations Director"}, {"term": "DDT", "def": "Division Disaster Team"}, {"term": "DEA", "def": "Digital Engagement Associate"}, {"term": "DEBV", "def": "Disaster Event-Based Volunteer"}, {"term": "DEP", "def": "Deploy"}, {"term": "DES", "def": "Distribution of Emergency Supplies"}, {"term": "DEST", "def": "Domestic Emergency Support Team"}, {"term": "DEU", "def": "Donor Enterprise Unit"}, {"term": "DFC", "def": "Disaster Field Chapter"}, {"term": "DFCS", "def": "Division of Family and Children Services"}, {"term": "DFO", "def": "Disaster Field Office"}, {"term": "DFRAP", "def": "Disaster Fundraising Action Plan"}, {"term": "DFS", "def": "Disaster Frontline Supervisor"}, {"term": "DFSC", "def": "Disaster Field Supply Center"}, {"term": "DFVP", "def": "Divisional Fundraising Vice President"}, {"term": "D-GRAM", "def": "Emergency Direct Mail Piece"}, {"term": "DHCP", "def": "Dynamic Host Configuration Protocol"}, {"term": "DHHS", "def": "Department of Health and Human Services"}, {"term": "DHS", "def": "Disaster Health Services / Department of Homeland Security"}, {"term": "DI", "def": "Disability Integration"}, {"term": "DID", "def": "Donor Identification"}, {"term": "DIG", "def": "Donor Insight Gateway"}, {"term": "DigiDOC", "def": "Digital Operations Center"}, {"term": "DIGS", "def": "Define the problem, Identify the facts bearing on the problem, Generate alternatives in coordination with the stakeholders, / Select the best solution"}, {"term": "DIN", "def": "Donation Identification Number"}, {"term": "DIOH", "def": "Days Inventory on Hand"}, {"term": "DIP", "def": "Data Input Procedures"}, {"term": "DIR", "def": "Director / DIRECT (Direct Donor Fund). D(onor), I(ntent), / RE(cognition), C(onfirmation), and T(rust)"}, {"term": "DISAIFUND", "def": "Advanced Instructor Fundamentals"}, {"term": "DISLOG", "def": "Disaster Log"}, {"term": "DIST", "def": "Disaster Instructor Specialty Training"}, {"term": "DL", "def": "Driver’s License"}, {"term": "DLAG", "def": "Diversity Leadership Advisory Group"}, {"term": "DLC", "def": "Disaster Logistics Center"}, {"term": "DLTA", "def": "Discretionary Long-Term Allocation"}, {"term": "DLU", "def": "Disaster Logistics Unit"}, {"term": "DM", "def": "Disaster Management / District Manager"}, {"term": "DMA", "def": "Disaster Management Area"}, {"term": "DMAC", "def": "Disaster Manager Associate Certification"}, {"term": "DMAT", "def": "Disaster Medical Assistance Teams"}, {"term": "DMC", "def": "Disaster Computer Maintenance Center / Disaster Management Committee / Disaster Manager Certification"}, {"term": "DMD", "def": "Division Manufacturing Director"}, {"term": "DME", "def": "Durable Medical Equipment"}, {"term": "DMH", "def": "Disaster Mental Health"}, {"term": "DMHS", "def": "Disaster Mental Health Services"}, {"term": "DMIS", "def": "Donor Management Information System / Disaster Management Information System"}, {"term": "DMORT", "def": "Disaster Mortuary Operational / Response Team"}, {"term": "DMS", "def": "Disaster Mental Services / Division Mobilization and Support"}, {"term": "DMT", "def": "Disaster Management Training"}, {"term": "DMWT", "def": "Deploy Materials, Workers, and Technology"}, {"term": "DNR", "def": "Do Not Resuscitate"}, {"term": "DO", "def": "Disbursing Order / Duty Officer"}, {"term": "DOB", "def": "Duplication of Benefits Date of Birth"}, {"term": "DOC", "def": "Disaster Operations Center"}, {"term": "DOCC", "def": "Disaster Operations Coordination Center"}, {"term": "DOD", "def": "Disaster Only Donor"}, {"term": "DOIS", "def": "Disaster Operation Information Sheet / Disaster Operations Information System / DOOR, THE. Disaster Operations Open Requests / (“The Grid”)"}, {"term": "DOR", "def": "Daily Operations Report"}, {"term": "DOSR", "def": "Disaster Operations Summary Report"}, {"term": "DOT", "def": "Directly Observed Treatment / Department of Transportation"}, {"term": "DOVES", "def": "Disaster Operations Volunteer Escapees"}, {"term": "DP", "def": "Displaced Person / Client Disaster Partnerships"}, {"term": "DPA", "def": "Disaster Public Affairs"}, {"term": "DPC", "def": "Division Pandemic Coordinator"}, {"term": "DPM", "def": "Disaster Program Manager"}, {"term": "DPS", "def": "Disaster Program Specialist"}, {"term": "DPX", "def": "Disaster Program Manager or Specialist"}, {"term": "DR", "def": "Disaster Relief Operation / Disaster Responder"}, {"term": "DRA", "def": "Disaster Response Area"}, {"term": "DRC", "def": "Disaster Recovery Center / Disaster Response Center"}, {"term": "DRCF", "def": "Disaster Readiness and Capacity Framework"}, {"term": "DRD", "def": "Donor Resources Development / Donor Recruitment Department"}, {"term": "DRF", "def": "Disaster Relief Fund"}, {"term": "DRG", "def": "Disaster Relocation Group / Domestic Readiness Group"}, {"term": "DRIS", "def": "Disaster Responder Information System"}, {"term": "DRM", "def": "Donor Relationship Management"}, {"term": "DRMS", "def": "Disaster Resource Management System / Donor Relationship Management System"}, {"term": "DRMT", "def": "Disaster Response Management Team"}, {"term": "DRO", "def": "Disaster Relief Operation / Regional Disaster Officer"}, {"term": "DROMIS", "def": "Disaster Relief Operation Management / Information System"}, {"term": "DRP", "def": "Disaster Response Plan"}, {"term": "DRR", "def": "Disaster Risk Reduction / Deployment Readiness Review"}, {"term": "DRTR", "def": "Disaster Responder Training Requirements"}, {"term": "DS", "def": "Donor Services / Donor Strategy"}, {"term": "DSA", "def": "Diversity Sensitivity and Awareness"}, {"term": "DSARS", "def": "Disaster Services Automated Reporting / System"}, {"term": "DSC", "def": "Disaster Staff Card / Disaster Spiritual Care"}, {"term": "DSCA", "def": "Defense Support of Civil Authorities"}, {"term": "DSCO", "def": "Deputy State Coordinating Officer / Disaster Supply Chain Officer"}, {"term": "DSCR", "def": "Donor Status Change Record"}, {"term": "DSD", "def": "Donor Strategy Department"}, {"term": "DSF", "def": "Disaster Services Finance"}, {"term": "DSFC", "def": "Disaster Supply Field Center"}, {"term": "DSHR", "def": "Disaster Services Human Resources"}, {"term": "DSMC", "def": "Disaster Services Maintenance Center"}, {"term": "D-SNAP", "def": "Disaster Supplemental Nutrition Program"}, {"term": "DSO", "def": "Disaster Services Overview / Disaster Services Orientation"}, {"term": "DSOMR", "def": "Disaster Services Operations / Morning Report"}, {"term": "DSPM", "def": "Disaster Services Program Manager"}, {"term": "DSS", "def": "Defense Security Service"}, {"term": "DST", "def": "Disaster Services Technology"}, {"term": "DSTIP", "def": "Disaster Services Technology / Integration Program"}, {"term": "DTP", "def": "Disaster Technology Procedure"}, {"term": "DTS", "def": "Disaster Training System"}, {"term": "DTT", "def": "Disaster Technology Team / Disaster Transportation Tool"}, {"term": "DV", "def": "Disaster Volunteer"}, {"term": "DVA", "def": "Department of Veteran Affairs"}, {"term": "DVIR", "def": "Driver Vehicle Inspection Report"}, {"term": "DVP", "def": "Division Vice President"}, {"term": "DVSE", "def": "Division Volunteer Services Executive"}, {"term": "DWE", "def": "Disaster Workforce Engagement"}, {"term": "DWEM", "def": "Disaster Workforce Engagement Manager"}, {"term": "DWET", "def": "Disaster Workforce Engagement Team"}, {"term": "DWI", "def": "Disaster Welfare Inquiry / Disaster Welfare Information"}, {"term": "DWIB", "def": "Disaster Welfare Inquiry Bulletin / Disaster Welfare Information Bulletin"}, {"term": "DWMT", "def": "Disaster Workforce Management Team"}, {"term": "DWR", "def": "Disaster Workforce Readiness"}, {"term": "EA", "def": "Emergency Assistance / Each"}, {"term": "EAL", "def": "Emergency Action Level"}, {"term": "EAM", "def": "Enterprise Asset Management"}, {"term": "EAP", "def": "Emergency Action Plan / Employee Assistance Program"}, {"term": "EAS", "def": "Emergency Alert System / Emergency Aid Station / End of Active Service"}, {"term": "EBS", "def": "Emergency Broadcast System"}, {"term": "EBV", "def": "Event-Based Volunteer"}, {"term": "ECG", "def": "Electrocardiogram"}, {"term": "ECM", "def": "Emergency Communication Message"}, {"term": "ECRE", "def": "European Council on Refugees and Exiles"}, {"term": "eCRM", "def": "Electronic Red Cross Message"}, {"term": "ECRV", "def": "Emergency Communications / Response Vehicle"}, {"term": "ED", "def": "Executive Director"}, {"term": "EDDR", "def": "Electronic Donor Data Report"}, {"term": "EDGE", "def": "Engagement, Development, Growth, and Education."}, {"term": "EDI", "def": "Electronic Data Interchange"}, {"term": "EDM", "def": "Environment and Disaster Management"}, {"term": "EDT", "def": "Eastern Daylight Time"}, {"term": "EECI", "def": "Essential Elements of Critical Information"}, {"term": "EEI", "def": "Essential Elements of Information"}, {"term": "EEO", "def": "Equal Employment Opportunity / Emergency Executive Order"}, {"term": "EFA", "def": "Emergency First Aid"}, {"term": "EGC", "def": "Executive Governance Council"}, {"term": "EHL", "def": "Exploring Humanitarian Law"}, {"term": "EHS", "def": "Extremely Hazardous Substance / Environmental Health and Safety"}, {"term": "EHTER", "def": "Environmental Health Training in / Emergency Response"}, {"term": "EIF", "def": "Emergency Information Form"}, {"term": "EKG", "def": "Electrocardiogram, Electrocardiograph"}, {"term": "EM", "def": "Emergency Management"}, {"term": "EMA", "def": "Emergency Management Agency"}, {"term": "EMAC", "def": "Emergency Management Assistance Compact / Emergency Management Activity Center / Emergency Mutual Aid Contract"}, {"term": "EMBARC", "def": "Education Management Base for the / American Red Cross"}, {"term": "EMD", "def": "Emergency Management Director"}, {"term": "EMPG", "def": "Emergency Management Performance Grant"}, {"term": "EMR", "def": "Experience Modifier Rate / Electronic Medical Record"}, {"term": "EMS", "def": "Emergency Medical Services"}, {"term": "EMSC", "def": "Emergency Medical Services for Children"}, {"term": "EMT", "def": "Emergency Medical Technician"}, {"term": "ENN", "def": "Emergency Nutrition Network"}, {"term": "EO", "def": "Executive Order"}, {"term": "EOB", "def": "End of Business"}, {"term": "EOC", "def": "Emergency Operations Center / Establish Operating Command"}, {"term": "EOL", "def": "Elected Official Liaison"}, {"term": "EOLN", "def": "Elected Officials Liaison Network"}, {"term": "EOP", "def": "Emergency Operations Plan"}, {"term": "EOTF", "def": "Emergency Operations Training Facility"}, {"term": "EPA", "def": "Environmental Protection Agency"}, {"term": "EPAP", "def": "Emergency Prescription Assistance Program"}, {"term": "EPAR", "def": "Electronic Apheresis Procedure Record"}, {"term": "EPAT", "def": "Earliest Possible Arrival Time"}, {"term": "EPD", "def": "Epidemic"}, {"term": "EPMO", "def": "Enterprise Program Management Office"}, {"term": "EQK", "def": "Earthquake"}, {"term": "EQP", "def": "Equipment Qualification Protocol"}, {"term": "ER", "def": "External Relations"}, {"term": "ERES", "def": "Electronic Records and Electronic Signatures"}, {"term": "ERG", "def": "Emergency Response Group"}, {"term": "ERM", "def": "Equipment Requirements Matrix"}, {"term": "ERP", "def": "Enterprise Resource Planning"}, {"term": "ERS", "def": "Emergency Relocation Site"}, {"term": "ERT", "def": "Emergency Response Team"}, {"term": "ERT-A", "def": "Emergency Response Team—Advanced"}, {"term": "ERU", "def": "Emergency Relief Unit / Emergency Response Unit"}, {"term": "ERV", "def": "Emergency Response Vehicle"}, {"term": "ESA", "def": "Environmental Site Assessment"}, {"term": "ESB", "def": "Enterprise Service Bus"}, {"term": "ESC", "def": "Executive Steering Committee / Emotional Support Care"}, {"term": "ESD", "def": "Enterprise Systems Development"}, {"term": "ESF", "def": "Emergency Support Functions:"}, {"term": "ESL", "def": "English as a Second Language"}, {"term": "ESP", "def": "Email Service Provider"}, {"term": "ESPM", "def": "Emergency Services Program Manager"}, {"term": "ESPMI", "def": "Emergency Services Program / Manager Institute"}, {"term": "ESPMO", "def": "Emergency Services Program / Management Orientation"}, {"term": "ESS", "def": "Employee Self-Service"}, {"term": "EST", "def": "Emergency Support Team / Eastern Standard Time"}, {"term": "ETA", "def": "Estimated Time of Arrival"}, {"term": "ETD", "def": "Estimated Time of Departure"}, {"term": "ETE", "def": "Estimated Time En Route"}, {"term": "ETM", "def": "Enterprise Technology Mode"}, {"term": "ETS", "def": "Estimated Time of Separation"}, {"term": "EU", "def": "European Union"}, {"term": "EUROSHA", "def": "European Open-Source Humanitarian Aid"}, {"term": "EUS", "def": "End User-Support / End-User Services"}, {"term": "EUT", "def": "End User Training"}, {"term": "EUTS", "def": "End User Technology Solutions"}, {"term": "EVAL", "def": "Evaluation"}, {"term": "EVE", "def": "Engage Volunteers and Employees"}, {"term": "EWI", "def": "Emergency Welfare Inquiry"}, {"term": "EWS", "def": "Early Warning System"}, {"term": "FAC", "def": "Facilities Management / Family Assistance Center"}, {"term": "FACE", "def": "Face, Arms, Speech, Time"}, {"term": "FACT", "def": "First Aid for Children Today / Field Assessment and / Coordination Team"}, {"term": "FANS", "def": "Functional and Access Needs in Shelters"}, {"term": "FAQ", "def": "Frequently Asked Questions"}, {"term": "FAR", "def": "Facility Audit Report"}, {"term": "FART", "def": "Fast Action Response Team"}, {"term": "FAST", "def": "Field Assessment Team / First Action Station Team / Face, Arms, Speech, Time / First Aid Station Team / First Aid Services Team / Functional Assessment Service Team"}, {"term": "FAT", "def": "Federal Assistance Team"}, {"term": "FBCO", "def": "Faith-based and Community Organizations"}, {"term": "FBINCAAA", "def": "FBI National Citizens Academy / Alumni Association"}, {"term": "FCC", "def": "Functional Cost Code / Functional Cost Center"}, {"term": "FCDOM", "def": "Fundamentals of Chapter Disaster / Operations Management"}, {"term": "FCFS", "def": "First Come, First Served"}, {"term": "FCO", "def": "Federal Coordinating Officer"}, {"term": "FD", "def": "Fundraising/Development"}, {"term": "FDA", "def": "Food and Drug Administration"}, {"term": "FDRT", "def": "Finance Disaster Response Team"}, {"term": "FDS", "def": "Friends Disaster Service"}, {"term": "FEFO", "def": "First Expiry, First Out"}, {"term": "FEIN", "def": "Federal Employer Identification Number"}, {"term": "FEMA", "def": "Federal Emergency Management Agency"}, {"term": "FET", "def": "Facilities Engineering Technology"}, {"term": "FF", "def": "Feeding"}, {"term": "FFM", "def": "Field Finance Manual / Field Finance Manager"}, {"term": "FFRC", "def": "Friends and Family Reception Center"}, {"term": "FHA", "def": "Fair Housing Act"}, {"term": "FHMP", "def": "Flood Hazard Mitigation Program"}, {"term": "FIF", "def": "Fundamentals of Instruction and Facilitation"}, {"term": "FIFO", "def": "First in, First Out"}, {"term": "FIN", "def": "Finance"}, {"term": "FIND", "def": "Figure out the problem, Identify possible solutions, Name pros and cons, / Determine the best solution"}, {"term": "FIPS", "def": "Federal Information Processing Standards"}, {"term": "FIR", "def": "Fire"}, {"term": "FIRM", "def": "Flood Insurance Rate Map"}, {"term": "FIRST", "def": "Frontline Immediate Response Shelter Team"}, {"term": "FIT", "def": "Fundamentals of Instructor Training"}, {"term": "FLA", "def": "Family Links Answers"}, {"term": "FLD", "def": "Flood (Flash, Dam Break, Landside, Mudslide)"}, {"term": "FLM", "def": "Field Leadership Meeting"}, {"term": "FLSA", "def": "Fair Labor Standards Act"}, {"term": "FLT", "def": "Flood Caused by or Associated with Tornados"}, {"term": "FMA", "def": "Field Marketing Associate"}, {"term": "FMC", "def": "Fleet Management Company"}, {"term": "FMD", "def": "Field Marketing Directions"}, {"term": "FMEA", "def": "Failure Modes and Effects Analysis"}, {"term": "FML", "def": "Family Medical Leave"}, {"term": "FMPP", "def": "Financial Manual of Policy and Procedures"}, {"term": "FNDR", "def": "Fund Raiser"}, {"term": "FNS", "def": "Functional Needs Shelter"}, {"term": "FNSS", "def": "Functional Needs Support Services"}, {"term": "FO", "def": "Forklift Operator"}, {"term": "FOA", "def": "Field Office Assistant"}, {"term": "FOC", "def": "Field Office Coordinator"}, {"term": "FOCIS", "def": "Field Operations Consolidated / Information System"}, {"term": "FOR", "def": "Forest Fire (Includes Wild, Range, and Grass Fires)"}, {"term": "FOUO", "def": "For Official Use Only"}, {"term": "FPC", "def": "Facility Pandemic Coordinator"}, {"term": "FPPG", "def": "Federated and Pledge Processing Group"}, {"term": "FPT", "def": "Facility Pandemic Team"}, {"term": "FR", "def": "Fund Raising"}, {"term": "FRF", "def": "Fundraising Functionality"}, {"term": "FRN-OCRA", "def": "Funds Raised for National Online Chapter / Reporting Application"}, {"term": "FROST", "def": "Field Remote Operations Support Team"}, {"term": "FRR", "def": "Family Reunification Request"}, {"term": "FS", "def": "Family Service"}, {"term": "FSA", "def": "Flexible Spending Account"}, {"term": "FSC", "def": "Food Security Cluster"}, {"term": "FSI", "def": "Financial and Statistical Information"}, {"term": "FSM", "def": "Field Service Manager"}, {"term": "FSV", "def": "Full Site Validation"}, {"term": "FT", "def": "Full Time"}, {"term": "FTD", "def": "First Time Donor"}, {"term": "FTE", "def": "Full Time Equivalent / Full Time Employee"}, {"term": "FTF", "def": "Feeding Task Force"}, {"term": "FTP", "def": "File Transfer Protocol"}, {"term": "FURP", "def": "Field Unit Reporting Portal"}, {"term": "FY", "def": "Fiscal Year"}, {"term": "FYSA", "def": "For Your Situational Awareness"}, {"term": "FYU", "def": "For Your Use"}, {"term": "GAAP", "def": "Generally Accepted Accounting Principles"}, {"term": "GAME", "def": "Get Additional Manager Evaluation"}, {"term": "GAMP", "def": "Good Automated Manufacturing Practices"}, {"term": "GAP", "def": "Group/Activity/Position"}, {"term": "GCMS", "def": "Global Card Management System"}, {"term": "GCSF", "def": "Granulocyte-Colony Stimulating Factor"}, {"term": "GDPC", "def": "Global Disaster Preparedness Center"}, {"term": "GEN", "def": "Generalist"}, {"term": "GETS", "def": "Government Emergency Telecommunications / Service"}, {"term": "GFS", "def": "Global Forecasting System"}, {"term": "GIS", "def": "Geographic Information System / Gift Imaging Solution"}, {"term": "GL", "def": "General Ledger"}, {"term": "GLP", "def": "Good Laboratory Practices"}, {"term": "GLS", "def": "Global Logistics Services"}, {"term": "GMP", "def": "Good Manufacturing Practices"}, {"term": "GMT", "def": "Greenwich Mean Time"}, {"term": "GNIS", "def": "Geographic Names Information System"}, {"term": "GO", "def": "Government Operations"}, {"term": "GOV", "def": "Government"}, {"term": "GPS", "def": "Global Positioning System"}, {"term": "GR", "def": "Government Relations"}, {"term": "GRC", "def": "Governance, Risk, and Controls"}, {"term": "GSD", "def": "General Services Division / General Supply Division"}, {"term": "GUI", "def": "Graphical User Interface"}, {"term": "H&S", "def": "Health and Safety"}, {"term": "HA", "def": "Humanitarian Assistance"}, {"term": "HAP", "def": "Haiti Assistance Program"}, {"term": "HAV", "def": "Hepatitis A Virus"}, {"term": "HAZMAT", "def": "Hazardous Materials"}, {"term": "HC", "def": "Hub Chairman / Humanitarian Community"}, {"term": "HCC", "def": "Hero Care Center"}, {"term": "HDTI", "def": "Humanitarian Data and Trust Initiative"}, {"term": "HEICS", "def": "Emergency Incident Command System"}, {"term": "HES", "def": "Hurricane Evaluation Study"}, {"term": "HF", "def": "High Frequency"}, {"term": "HFC", "def": "Home Fire Campaign"}, {"term": "HFL", "def": "Flooding Caused by or Associated With / Hurricanes"}, {"term": "HFP", "def": "Hold for Further Processing"}, {"term": "HGB", "def": "Hemoglobin"}, {"term": "HH", "def": "Household / Hereditary Hemochromatosis / Health History"}, {"term": "HHFA", "def": "Hurricane Harvey Financial Assistance"}, {"term": "HHS", "def": "Health and Human Services"}, {"term": "HINIVUU", "def": "Humanity, Impartiality, Neutrality / Independence, Voluntary service, Unity, / Universality"}, {"term": "HIPAA", "def": "Health Insurance Portability and / Accountability Act"}, {"term": "HIRA", "def": "Hazard Identification and Risk Assessment"}, {"term": "HIT", "def": "Health Information Team / Humanitarian Information Technology"}, {"term": "HITS", "def": "Humanitarian IT Services"}, {"term": "HM", "def": "Hub Manager"}, {"term": "HMF", "def": "Hotel/Motel Fire"}, {"term": "HMO", "def": "Health Maintenance Organization"}, {"term": "HO", "def": "Handout"}, {"term": "HOP", "def": "Hospital Outreach Program"}, {"term": "HOT", "def": "Humanitarian OpenStreetMap Team"}, {"term": "HQ", "def": "Headquarters"}, {"term": "HR", "def": "Human Resources"}, {"term": "HRA", "def": "Health Reimbursement Account"}, {"term": "HRIS", "def": "Human Resources Information System"}, {"term": "HRP", "def": "Hurricane Recovery Program"}, {"term": "HRPPM", "def": "Human Resources Policy and Procedure / Manual"}, {"term": "HS", "def": "Health Services"}, {"term": "HSA", "def": "Health Savings Account / Hardship Allowance / Health Spending Account"}, {"term": "HSC", "def": "Homeland Security Council"}, {"term": "HSIN", "def": "Homeland Security Information Network"}, {"term": "HSO", "def": "Humanitarian Services Operations"}, {"term": "HSOC", "def": "Homeland Security Operations Center"}, {"term": "HSPMO", "def": "Humanitarian Services Program / Management Office"}, {"term": "HSR", "def": "Health Status Report / Health Services Record"}, {"term": "HSRW", "def": "Health Services Response Workshop"}, {"term": "HSS", "def": "Health and Safety Services"}, {"term": "HSSAT", "def": "Health and Safety Services / Administrator Training"}, {"term": "H3", "def": "Humanitarian Services Support System"}, {"term": "HUD", "def": "Housing and Urban Development"}, {"term": "HUR", "def": "Hurricane"}, {"term": "HVA", "def": "Hazard Vulnerability Assessment"}, {"term": "HVAC", "def": "Heating, Ventilation, and Air Conditioning"}, {"term": "IA", "def": "Items of Assistance / Impact Assessment / Immediate Assistance"}, {"term": "IAA", "def": "Inter-Agency Agreement"}, {"term": "IACET", "def": "International Association of Continuing / Education and Training"}, {"term": "IAEM", "def": "International Association of Emergency / Managers"}, {"term": "IAJVS", "def": "International Association of Jewish / Vocational Services"}, {"term": "IAP", "def": "Incident Action Plan / Individual Assistance Provider"}, {"term": "IBEPAG", "def": "International Blood Emergency Planning / Action Group"}, {"term": "IBMTR", "def": "International Bone Marrow Transplant / Registry"}, {"term": "IC", "def": "Incident Commander"}, {"term": "ICA", "def": "Isolated Care Area"}, {"term": "ICCT", "def": "Integrated Care and Condolence Team"}, {"term": "ICD", "def": "International Classification of Diseases / Implantable Cardioverter-Defibrillator"}, {"term": "ICE", "def": "Investigations, Compliance and Ethics / In Case of Emergency / Immigration and Customs Enforcement"}, {"term": "ICF", "def": "Industrial/Commercial Fire"}, {"term": "ICN", "def": "International Chapter Network"}, {"term": "ICP", "def": "Incident Command Post"}, {"term": "ICPC", "def": "International Conference of Police Chaplains"}, {"term": "ICP2", "def": "Indicators of Chapter Performance and / Potential"}, {"term": "ICRC", "def": "International Committee of the Red Cross"}, {"term": "ICS", "def": "Incident Command System / Invoice Conversion Services"}, {"term": "ICT", "def": "Integrated Care Team / Information and Communications Technology"}, {"term": "ICU", "def": "Intensive Care Unit"}, {"term": "ICVA", "def": "International Council of Voluntary Agencies"}, {"term": "ID", "def": "Information Dissemination"}, {"term": "IDA", "def": "Individual Damage Assessment"}, {"term": "IDAG", "def": "Internal Diversity Advocates Group"}, {"term": "IDC", "def": "Individual Disaster Care"}, {"term": "IDD", "def": "Integrated Development and Delivery"}, {"term": "IDI", "def": "International Disaster Inquiries"}, {"term": "IDLH", "def": "Immediately Dangerous to Life and Health"}, {"term": "ID-NAT", "def": "Individual Donation Testing"}, {"term": "IDP", "def": "Individual Development Planning / Instructor Development Plan"}, {"term": "IDR", "def": "International Disaster Response"}, {"term": "IDT", "def": "Integrated Development and Training"}, {"term": "IDWI", "def": "International Disaster Welfare Inquiry"}, {"term": "IEEE", "def": "Institute of Electrical and Electronics Engineers"}, {"term": "IEMS", "def": "Integrated Emergency Management System"}, {"term": "IFRC", "def": "International Federation of Red Cross and / Red Crescent Societies"}, {"term": "IGO", "def": "Inter-Governmental Organization"}, {"term": "IHL", "def": "International Humanitarian Law"}, {"term": "IIMG", "def": "Interagency Incident Management Group"}, {"term": "IIR", "def": "Initial Incident Report"}, {"term": "IKD", "def": "In-Kind Donations"}, {"term": "ILRU", "def": "Independent Living Research Utilization"}, {"term": "ILT", "def": "Instructor-led Training"}, {"term": "IM", "def": "Instructor’s Manual / Information Management"}, {"term": "IMC", "def": "International Medical Corps"}, {"term": "IMMEL", "def": "Information, Monitoring, Evaluation, and / Learning"}, {"term": "IMOIHO", "def": "In Memory Of / In Honor Of"}, {"term": "IMPACT", "def": "International Mobilization and / Preparation for Action"}, {"term": "IMS", "def": "Information Management Support Services"}, {"term": "IMSA", "def": "Information Management and / Situational Awareness"}, {"term": "IMT", "def": "Incident Management Team"}, {"term": "IND", "def": "Individual Donation Testing"}, {"term": "ININ", "def": "Interactive Intelligence"}, {"term": "INR", "def": "International Normalized Ratio"}, {"term": "INS", "def": "Immigration and Naturalization Services"}, {"term": "INV", "def": "Invoice"}, {"term": "IP", "def": "Information and Planning"}, {"term": "IPS", "def": "Integrated Program Schedule"}, {"term": "IPTF", "def": "Intermediate Phase Task Force"}, {"term": "IQ", "def": "Installation Qualification"}, {"term": "IR", "def": "Invoice Review / Invoice Reconciliation"}, {"term": "IRA", "def": "Initial Rapid Assessment"}, {"term": "IRB", "def": "Institutional Review Board"}, {"term": "IRC", "def": "Initial Review Completed"}, {"term": "IRD", "def": "International Relief and Development"}, {"term": "IRF", "def": "International Relief Fund"}, {"term": "IRFF", "def": "International Relief Friendship Foundation"}, {"term": "IROC", "def": "International Response Operations Center"}, {"term": "IRUSA", "def": "Islamic Relief USA"}, {"term": "IS", "def": "Information Services"}, {"term": "ISBT", "def": "International Society of Blood Transfusion"}, {"term": "ISCT", "def": "International Society for Cellular Therapy"}, {"term": "ISD", "def": "International Services Department"}, {"term": "ISSA", "def": "International Sports Sciences Association"}, {"term": "ISSP", "def": "Integrity Sales for the Service Professional"}, {"term": "IT", "def": "Information Technology / Integrated Technology"}, {"term": "ITIL", "def": "Information Technology Infrastructure Library"}, {"term": "ITO", "def": "International Travel Order"}, {"term": "ITRFS", "def": "It Request for Services"}, {"term": "ITS", "def": "International Tracing Services"}, {"term": "ITSC", "def": "IT Steering Committee"}, {"term": "ITSD", "def": "Information Technology Service Desk"}, {"term": "ITSM", "def": "Information Technology Service Management"}, {"term": "IV", "def": "Intravenous"}, {"term": "JACIE", "def": "Joint Accreditation Committee (ISCT and / EBMT)"}, {"term": "JAM", "def": "Joint Account Management"}, {"term": "JFO", "def": "Joint Field Office"}, {"term": "JFSOC", "def": "Joint Family Support Operations Center"}, {"term": "JIC", "def": "Joint Information Center"}, {"term": "JLT", "def": "Joint Leadership Team"}, {"term": "JOA", "def": "Joint Operations Area"}, {"term": "JOC", "def": "Joint Operations Center"}, {"term": "JTF", "def": "Joint Task Force"}, {"term": "KAP", "def": "Knowledge, Attitude, and Practice"}, {"term": "KCSR", "def": "Kansas City Southern Railway Company"}, {"term": "KPI", "def": "Key Performance Indicator"}, {"term": "LA", "def": "Loaned Agency Employee"}, {"term": "LAC", "def": "Latin America and the Caribbean"}, {"term": "LAMIKA", "def": "A Better Life in My Neighborhood (in Creole)"}, {"term": "LAT", "def": "Logistics Advance Team"}, {"term": "LCIA", "def": "Local Chapter Integration Agreement"}, {"term": "LCR", "def": "Community Relations Liaison"}, {"term": "LCSW", "def": "Licensed Clinical Social Worker"}, {"term": "LCV", "def": "Local Community Volunteer"}, {"term": "LDR", "def": "Lutheran Disaster Response"}, {"term": "LDS", "def": "Church of Jesus Christ of Latter-Day Saints"}, {"term": "LDT", "def": "Leader Development Training"}, {"term": "LDV", "def": "Local Disaster Volunteer"}, {"term": "LE", "def": "Law Enforcement"}, {"term": "LEAD", "def": "Leadership, Education, and Development"}, {"term": "LEI", "def": "Latino Engagement Initiative"}, {"term": "LEPC", "def": "Local Emergency Planning Committee"}, {"term": "LET", "def": "Learning, Education, Training / Latino Engagement Team"}, {"term": "LFA", "def": "Lead Federal Agency"}, {"term": "LFC", "def": "Logistics Fulfillment Center"}, {"term": "LFS", "def": "Lutheran Family Services"}, {"term": "LG", "def": "Government Operations"}, {"term": "LGBT", "def": "Lesbian, Gay, Bisexual, Transgender"}, {"term": "LIFO", "def": "Last in, first out"}, {"term": "LIRV", "def": "Logistics Initial Response Vehicle"}, {"term": "LLA", "def": "Lowest Logical Airfare"}, {"term": "LLE", "def": "Local Law Enforcement"}, {"term": "LLR", "def": "Local Learning Registrar"}, {"term": "LLV", "def": "Landlord Verification"}, {"term": "LMS", "def": "Learning Management System"}, {"term": "LNA", "def": "Licensed Nurse Assistant"}, {"term": "LNO", "def": "Liaison Officer"}, {"term": "LO", "def": "Learning Object"}, {"term": "LOA", "def": "Letter of Agreement"}, {"term": "LOB", "def": "Line of Business"}, {"term": "LOC", "def": "Level of Consciousness / Location Code / Letter of Collaboration / Language of Caring"}, {"term": "LOE", "def": "Level of Evidence"}, {"term": "LOG", "def": "Logistics"}, {"term": "LOO", "def": "List of Observations"}, {"term": "LOP", "def": "Local Operating Procedure"}, {"term": "LOS", "def": "Line of Service"}, {"term": "LOTO", "def": "Lockout Tagout"}, {"term": "LOU", "def": "Limited Official Use"}, {"term": "LPM", "def": "Liters per Minute"}, {"term": "LPN", "def": "Licensed Practical Nurse"}, {"term": "LRR", "def": "Leadership Readiness Requirements / Live Readiness Review"}, {"term": "LRV", "def": "Local Response Vehicle"}, {"term": "LSAP", "def": "Life, Safety and Asset Protection"}, {"term": "LSCO", "def": "Local School Community Organization"}, {"term": "LSS", "def": "Lutheran Social Services"}, {"term": "LSST", "def": "Logistics Shelter Support Team"}, {"term": "LSV", "def": "Local Site Validation"}, {"term": "LTC", "def": "Long-term Care"}, {"term": "LTF", "def": "Lost to Follow Up"}, {"term": "LTP", "def": "Licensed Training Provider"}, {"term": "LTR", "def": "Long Term Recovery"}, {"term": "LTRC", "def": "Long Term Recovery Committee"}, {"term": "LULAC", "def": "League of United Latin American Citizens"}, {"term": "LVA", "def": "Voluntary Agencies Liaison"}, {"term": "LVN", "def": "Licensed Vocational Nurse"}, {"term": "M&E", "def": "Monitoring and Evaluation"}, {"term": "MAC", "def": "Mission Assignment Coordinator / Multiagency Coordination Group / Media Access Controller / Medical Advisory Committee"}, {"term": "M&T", "def": "Meals and Transportation"}, {"term": "MACAT", "def": "Mass Care Administration Support"}, {"term": "MACC", "def": "Multi-Agency Coordination Center"}, {"term": "MACS", "def": "Manufacturing and Computer Standardization"}, {"term": "MAP", "def": "Merit Award Process / Marketing Access Portal"}, {"term": "MAPP", "def": "Manual of Administrative Policies and / Procedures"}, {"term": "MARC", "def": "Multi-Agency Resource Center"}, {"term": "MARS", "def": "Motivation, Association, Repetition, and Use of the Senses"}, {"term": "MASRU", "def": "Military Aid Society Referral Unit"}, {"term": "MASTT", "def": "Multi-Agency Shelter Transition Team"}, {"term": "MC", "def": "Mass Care"}, {"term": "MCD", "def": "Mass Casualty Disaster"}, {"term": "MCI", "def": "Mass Casualty Incident / Mass Care Incident"}, {"term": "MCM", "def": "Mass Casualty Management"}, {"term": "MCOV", "def": "Mobile Communications Office Vehicle"}, {"term": "MCPC", "def": "Mass Care Procurement Card"}, {"term": "MCS", "def": "Mobile Collection System"}, {"term": "MCW", "def": "Mass Care Webinar"}, {"term": "MD", "def": "Multi-Site Director / Muscular Dystrophy / Manufacturers’ Directions"}, {"term": "MDA", "def": "Maximum Daily Allowance"}, {"term": "MDG", "def": "Millennium Development Goals"}, {"term": "MDI", "def": "Metered Dose Inhaler"}, {"term": "MEF", "def": "Mission Essential Function"}, {"term": "MEPS", "def": "Military Entrance Processing Station"}, {"term": "MERV", "def": "Major Emergency Response Vehicle / Mini Erv"}, {"term": "MFF", "def": "Multi-Unit Family Fire"}, {"term": "MFL", "def": "Maintaining Family Links"}, {"term": "MGO", "def": "Major Gift Officer"}, {"term": "MH", "def": "Mobile Home / Mental Health"}, {"term": "MHS", "def": "Mental Health Services"}, {"term": "MI", "def": "Master Instructor / Manufacturers’ Inserts"}, {"term": "MISP", "def": "Minimum Initial Service Package"}, {"term": "MIWE", "def": "Managing an Inclusive Work Environment"}, {"term": "MLF", "def": "Minimum Level of Fitness"}, {"term": "MMA", "def": "Military Medical Authority / Mutual Aid Agreement"}, {"term": "MMC", "def": "Merchant Category Code"}, {"term": "MMF", "def": "Major Marketing Fundraising"}, {"term": "MMI", "def": "Meals, Mileage, and Incidentals / Mission Impact & Inclusion"}, {"term": "MN", "def": "Manager"}, {"term": "MOA", "def": "Memorandum of Assistance"}, {"term": "MOB", "def": "Mobilize"}, {"term": "MOU", "def": "Memorandum of Understanding"}, {"term": "MOVE", "def": "Mobile Outreach Vehicle"}, {"term": "MRB", "def": "Material Review Board"}, {"term": "MRC", "def": "Medical Reserve Corps"}, {"term": "MRE", "def": "Meal Ready to Eat"}, {"term": "MRV", "def": "Maintenance Response Vehicle / Mission Response Vehicle"}, {"term": "MSA", "def": "Master Service Agreement"}, {"term": "MSAT", "def": "Mobile Satellite"}, {"term": "MSDS", "def": "Material Safety Data Sheet"}, {"term": "MSEP", "def": "Military Spouse Employment Partnership"}, {"term": "MSIT", "def": "Multiple System Integration Testing"}, {"term": "MSP", "def": "Managed Service Provider"}, {"term": "MSS", "def": "Material Support Services (Logistics) / Manager Self-Service"}, {"term": "MST", "def": "Mountain Standard Time"}, {"term": "MT", "def": "Mobile Technician"}, {"term": "MTA", "def": "Medium Term Allocation"}, {"term": "MTC", "def": "Mobilize the Community"}, {"term": "MTF", "def": "More to Follow / Military Treatment Facility"}, {"term": "MTN", "def": "Military Training Network"}, {"term": "MUA", "def": "Mobile Unit Assistant"}, {"term": "MVCN", "def": "Military Veteran Caregiver Network"}, {"term": "MVI", "def": "Motor Vehicle Incident"}, {"term": "MVIR", "def": "Motor Vehicle Incident Report"}, {"term": "MWI", "def": "Military Welfare Inquiry"}, {"term": "NAB", "def": "National Association of Broadcasters"}, {"term": "NAC", "def": "Neighborhood Assistance Center, NEHC / Natural Account Codes"}, {"term": "NACC", "def": "National Association of Catholic Chaplains"}, {"term": "NAHN", "def": "National Association of Hispanic Nurses"}, {"term": "NAJC", "def": "National Association of Jewish Chaplains"}, {"term": "NAM", "def": "National Account Manager"}, {"term": "NAN", "def": "National Account Network"}, {"term": "NAOP", "def": "NHQ Advance Operational Plan"}, {"term": "NAPO", "def": "National Association of Police Organizations"}, {"term": "NARSC", "def": "National Animal Rescue and Sheltering / Coalition"}, {"term": "NASW", "def": "National Association of Social Workers"}, {"term": "NAT", "def": "Nurse Assistant Training"}, {"term": "NAWAS", "def": "National Alert and Warning System"}, {"term": "NBCA", "def": "National Baptist Convention of America"}, {"term": "NBCS", "def": "National Blood Computer System / National Biomedical Computer System"}, {"term": "NBDC", "def": "National Business and Disability Council"}, {"term": "NBNA", "def": "National Black Nurses Association"}, {"term": "NBRC", "def": "National Blood Resource Center"}, {"term": "NCAI", "def": "National Congress of American Indians"}, {"term": "NCCC", "def": "National Computer System Community Corps / National Civilian Community Corps"}, {"term": "NCCR", "def": "Northern California Coastal Region"}, {"term": "NCIB", "def": "National Charities Info Bureau"}, {"term": "NCMC", "def": "National Center for Missing and / Exploited Children"}, {"term": "NCOA", "def": "National Change of Address"}, {"term": "NCP", "def": "National Contingency Plan"}, {"term": "NCPP", "def": "National Center for Disaster Preparedness"}, {"term": "NCS", "def": "Non-Congregate Shelter"}, {"term": "NCSCLC", "def": "Non-Congregate Shelter Client Lodging / Coordinator"}, {"term": "NDA", "def": "Nondisclosure Agreement"}, {"term": "NDAC", "def": "National Diversity Advisory Council"}, {"term": "NDIS", "def": "National Disaster Information System"}, {"term": "NDMN", "def": "National Donations Management Network"}, {"term": "NDMS", "def": "National Disaster Medical System"}, {"term": "NDRF", "def": "National Disaster Recovery Framework"}, {"term": "NDRN", "def": "National Disability Rights Network"}, {"term": "NDRP", "def": "National Disaster Reimbursement Program"}, {"term": "NDRT", "def": "National Disaster Response Team"}, {"term": "NECLC", "def": "National Emergency Child Locator Center"}, {"term": "NEFRLS", "def": "National Emergency Family Registry and / Locator System"}, {"term": "NEHC", "def": "Neighborhood Emergency Help Center"}, {"term": "NEMA", "def": "National Emergency Management Association"}, {"term": "NEO", "def": "New Employee Orientation"}, {"term": "NERP", "def": "National Emergency Repatriation Plan"}, {"term": "NERT", "def": "National Emergency Response Team"}, {"term": "NET", "def": "Networking"}, {"term": "NEVO", "def": "New Employee and Volunteer Orientation"}, {"term": "NFDA", "def": "National Funeral Directors Association"}, {"term": "NFI", "def": "Non-food Item"}, {"term": "NFIP", "def": "National Flood Insurance Program"}, {"term": "NFO", "def": "National Fleet Operations"}, {"term": "NFRI", "def": "Non-Food Relief Items"}, {"term": "NGA", "def": "National Governors Association"}, {"term": "NGHA", "def": "Non-Governmental Humanitarian Agency"}, {"term": "NGO", "def": "Non-Governmental Organization"}, {"term": "NHC", "def": "National Hurricane Center"}, {"term": "NHQ", "def": "National Headquarters"}, {"term": "NICC", "def": "National Infrastructure Coordinating Center"}, {"term": "NIMS", "def": "National Incident Management System"}, {"term": "NJP", "def": "National Job Plan"}, {"term": "NITC", "def": "National Instructor Training Conference"}, {"term": "NLT", "def": "No Later Than"}, {"term": "NMCS", "def": "National Mass Care Strategy"}, {"term": "NNC", "def": "National Nursing Committee"}, {"term": "NOAA", "def": "National Oceanic and Atmospheric Association"}, {"term": "NOK", "def": "Next of Kin"}, {"term": "NP", "def": "Nurse Practitioner"}, {"term": "NPB", "def": "National Philanthropic Board"}, {"term": "NPI", "def": "Nonpharmaceutical Intervention"}, {"term": "NPM", "def": "National Preparedness Month"}, {"term": "NPRC", "def": "AmeriCorps National Preparedness and / Response Corps / Nepal Red Cross Society"}, {"term": "NRC", "def": "Nuclear Regulatory Commission"}, {"term": "NRF", "def": "National Response Framework"}, {"term": "NRP", "def": "National Response Plan"}, {"term": "NRT", "def": "National Readiness Target"}, {"term": "NS", "def": "National Society"}, {"term": "NSAL", "def": "Needed Supplies Adjudication Lane"}, {"term": "NSC", "def": "National Safety Council"}, {"term": "NSS", "def": "National Shelter System"}, {"term": "NSSE", "def": "National Special Security Event"}, {"term": "NST", "def": "National Scheduler Team"}, {"term": "NSTA", "def": "National Sound the Alarm"}, {"term": "NTL", "def": "National Testing Laboratory"}, {"term": "NTRL", "def": "National Testing and Research Laboratory"}, {"term": "NTS", "def": "Non-traditional Shelters"}, {"term": "NTSB", "def": "National Transportation Safety Board"}, {"term": "NUE", "def": "Notification of Unusual Event"}, {"term": "NUI", "def": "Nuclear Incident"}, {"term": "NVOAD", "def": "National Voluntary Organizations Active in / Disaster"}, {"term": "NVW", "def": "National Volunteer Week"}, {"term": "NWS", "def": "National Weather Service"}, {"term": "NYPC", "def": "National Young Professionals Council"}, {"term": "O&L", "def": "Operations and Logistics"}, {"term": "OAA", "def": "Operational Account Authorizer"}, {"term": "OADN", "def": "Organization of Associate Degree Nursing"}, {"term": "OC", "def": "On Call"}, {"term": "OCISO", "def": "Office of the Chief Information / Security Officer"}, {"term": "OCONUS", "def": "Outside Continental United States"}, {"term": "OCR", "def": "Optical Character Recognition"}, {"term": "ODAA", "def": "Other Duties as Assigned"}, {"term": "ODM", "def": "Operations Data Management"}, {"term": "OE", "def": "Operational Efficiency"}, {"term": "OEB", "def": "Operational Excellence Board"}, {"term": "OES", "def": "Office of Emergency Services"}, {"term": "OFAC", "def": "Office of Foreign Assets Control"}, {"term": "OGC", "def": "Office of the General Counsel"}, {"term": "OI", "def": "Opportunistic Infection"}, {"term": "OJT", "def": "On the Job Training"}, {"term": "OLC", "def": "Office of Legal Counsel"}, {"term": "OM", "def": "Operations Management"}, {"term": "ONA", "def": "Other Needs Assistance"}, {"term": "ONCOV", "def": "Office of the National Chair of Volunteers"}, {"term": "ONS", "def": "Operating National Society"}, {"term": "OODA", "def": "Observe, Orient, Decide, Act"}, {"term": "OPF", "def": "Operations Planning Fundamentals"}, {"term": "OPS", "def": "Operations"}, {"term": "OQ", "def": "Operation Qualification"}, {"term": "ORB", "def": "Online Resource Book"}, {"term": "ORC", "def": "One Red Cross"}, {"term": "ORO", "def": "Offsite Response Organization"}, {"term": "ORR", "def": "Office of Refugee Resettlement"}, {"term": "OS", "def": "Organization Support / Office Supplies"}, {"term": "OSC", "def": "On-Scene Coordinator / On-Scene Commander / Operations Support Center"}, {"term": "OSHA", "def": "Occupational Safety and Health Administration"}, {"term": "OST", "def": "Other Storms (Wind, Dust, Electric, Rain, Solar)"}, {"term": "OT", "def": "Operational Training"}, {"term": "OTC", "def": "Over-the-Counter (medication)"}, {"term": "OUO", "def": "Official Use Only"}, {"term": "OWA", "def": "Outlook Web Access"}, {"term": "P&I", "def": "Problem and Incident"}, {"term": "PA", "def": "Public Affairs / Physician’s Assistant"}, {"term": "PAC", "def": "Planning and Assessment Control"}, {"term": "PACS", "def": "Perioperative Autologous Cell Salvage"}, {"term": "PAD", "def": "Protective Action Division"}, {"term": "PAHQ/WA", "def": "Pre-Assignment Health Questionnaire / / Wellness Agreement"}, {"term": "PALS", "def": "Pediatric Advanced Life Support"}, {"term": "PAN", "def": "Primary Account Number"}, {"term": "PAR", "def": "Program Activity Report / Product Acquisition Review"}, {"term": "PARCEL", "def": "Partner Capacity Enhancement in Logistics"}, {"term": "PAS", "def": "Personal Assistance Services / Prior Approval Supplement"}, {"term": "PASSA", "def": "Participatory Approach for Safe Shelter / Awareness"}, {"term": "PAYS", "def": "Army Partnership for Youth Success"}, {"term": "PBEC", "def": "Points-Based Employee Contribution"}, {"term": "PBM", "def": "Patient-centered Blood Management"}, {"term": "PBOA", "def": "Partial Body-Obstructed Airway"}, {"term": "PCC", "def": "Poison Control Center"}, {"term": "PCI", "def": "Payment Card Industry"}, {"term": "PCIDSS", "def": "PCI Data Security Standard"}, {"term": "PCII", "def": "Protected Critical Infrastructure Information"}, {"term": "PCR", "def": "Polymerase Chain Reaction"}, {"term": "PCS", "def": "Permanent Change of Station"}, {"term": "PCT", "def": "Patient Care Technician"}, {"term": "PD", "def": "Position Description / Personal Development / Professional Development"}, {"term": "PDA", "def": "Preliminary Damage Assessment / Presbyterian / Disaster Response"}, {"term": "PDF", "def": "Portable Document File"}, {"term": "PDI", "def": "Post Donation Information"}, {"term": "PDP", "def": "Performance Development Process / Personal Development Plan / Professional Development Portal"}, {"term": "PDR", "def": "Preliminary Design Review / Physician’s Desk Reference"}, {"term": "PEARL", "def": "Pupils are Equal and Reactive to Light"}, {"term": "PEWG", "def": "Process Engineering Working Group"}, {"term": "PF", "def": "Personal Fundraising"}, {"term": "PFA", "def": "Psychological First Aid"}, {"term": "PGT", "def": "Process Governance Team"}, {"term": "PH", "def": "Public Health"}, {"term": "PHA", "def": "Public Health Authorities"}, {"term": "PHAST", "def": "Participatory Hygiene and Sanitation / Transformation"}, {"term": "PHC", "def": "Primary Health Care"}, {"term": "PHE", "def": "Public Health Emergency"}, {"term": "PHH", "def": "Fleet Management Credit Card"}, {"term": "PHN", "def": "Public Health Nurse"}, {"term": "PHSS", "def": "Preparedness, Health, and Safety Services"}, {"term": "PI", "def": "Package Insert / Principal Investigator"}, {"term": "PII", "def": "Personally Identifiable Information"}, {"term": "PIIC", "def": "Pandemic Influenza Infection Control"}, {"term": "PIN", "def": "Personal Identification Number"}, {"term": "PINT", "def": "Premature Infants in Need of Transfusion"}, {"term": "PIO", "def": "Public Information Officer"}, {"term": "PIOCS", "def": "Providing Information and Other Client / Services"}, {"term": "PIP", "def": "Performance Improvement Plan"}, {"term": "PL", "def": "Project Lead"}, {"term": "PM", "def": "Performance Matters / Program Manager / Preventive Maintenance / Problem Manager"}, {"term": "PMD", "def": "Project Management in Development"}, {"term": "PMDP", "def": "People Manager Development Program"}, {"term": "PMER", "def": "Planning, Monitoring, Evaluation, and Reporting"}, {"term": "PMN", "def": "Process Model Notation"}, {"term": "PMO", "def": "Project Management Office"}, {"term": "PMP", "def": "Prevention, Mitigation, and Preparedness / Project Management Plan"}, {"term": "PNC", "def": "Post-Natal Care"}, {"term": "PNOK", "def": "Primary Next of Kin"}, {"term": "PNS", "def": "Partner National Society"}, {"term": "PO", "def": "Purchase Order / Procedure Online / Process Owner"}, {"term": "POA", "def": "Portfolio Opportunity Assessment"}, {"term": "POC", "def": "Point of Contact / Point of Care"}, {"term": "POD", "def": "Point of Distribution / Point of Dispensing"}, {"term": "POS", "def": "Point of Sale"}, {"term": "POV", "def": "Privately Owned Vehicle / Personally Owned Vehicle"}, {"term": "PPAC", "def": "Policy and Planning Advisory Commission"}, {"term": "PPD", "def": "Policy and Program Development"}, {"term": "PPD-8", "def": "Presidential Policy Directive 8"}, {"term": "PPE", "def": "Personal Protective Equipment"}, {"term": "PPO", "def": "Preferred Provider Organization"}, {"term": "PPT", "def": "PowerPoint"}, {"term": "PQ", "def": "People Quotient / Performance Qualification / Product Qualification"}, {"term": "PQR", "def": "Portfolio Quality Report"}, {"term": "PR", "def": "Purchase Requisition"}, {"term": "PRC", "def": "Polish Red Cross"}, {"term": "PRCS", "def": "Pakistan Red Crescent Society"}, {"term": "PRSA", "def": "Public Relations Society of America"}, {"term": "PSA", "def": "Public Service Advertising / Public Service Announcement"}, {"term": "PSC", "def": "Program Service Code / Program Support Code / Private Security Company / Product and Service Code"}, {"term": "PSI", "def": "Pounds per Square Inch"}, {"term": "PSP", "def": "Potential System Problem"}, {"term": "PST", "def": "Pacific Standard Time"}, {"term": "PSTN", "def": "Public Switched Telephone Network"}, {"term": "PSU", "def": "Personal Statement of Understanding"}, {"term": "PT", "def": "Part Time"}, {"term": "PTO", "def": "Paid Time Off"}, {"term": "PTOC", "def": "Part Time On-Call"}, {"term": "P2P", "def": "Procure-To-Pay / Peer-to-Peer"}, {"term": "PWNA", "def": "Partnership with Native Americans"}, {"term": "PWSS", "def": "Password Self-Service"}, {"term": "PZ", "def": "Precautionary Zone"}, {"term": "Q&RA", "def": "Quality and Regulatory Affairs"}, {"term": "QA", "def": "Quality Assurance / Quarters Allowance"}, {"term": "QABPO", "def": "Quality Assurance Blood and Plasma / Operations"}, {"term": "QARA", "def": "Quality Assurance / Regulatory Affairs"}, {"term": "QMS", "def": "Quality Management System"}, {"term": "QNS", "def": "Quantity Not Sufficient"}, {"term": "QPS", "def": "Quick Pay Service"}, {"term": "QRA", "def": "Quality and Regulatory Affairs"}, {"term": "QRC", "def": "Quick Reference Card"}, {"term": "QRG", "def": "Quick Reference Guide"}, {"term": "QRM", "def": "Quick Reference Manual"}, {"term": "QRT", "def": "Quick Response Team"}, {"term": "QRU", "def": "Quarterly Retirement Update"}, {"term": "QS&RA", "def": "Quality, Safety and Regulatory Affairs"}, {"term": "RACES", "def": "Radio Amateur Civil Emergency Services"}, {"term": "RADR", "def": "Restaurants Active in Disaster Relief"}, {"term": "RAM", "def": "Regional Account Manager"}, {"term": "RAP", "def": "Rapid Assessment Process / Regional Action Plan"}, {"term": "RAST", "def": "Regional Application Support Team"}, {"term": "RC", "def": "Restricted Confidential / Receipt/Receiving / Regional Chairperson"}, {"term": "RCB", "def": "Release Control Board"}, {"term": "RCC", "def": "RC Care"}, {"term": "RCCO", "def": "Red Cross Coordinating Officer"}, {"term": "RCE", "def": "Regional Chapter Executive"}, {"term": "RCM", "def": "Red Cross Message / Radio Communications"}, {"term": "RCO", "def": "Computer Operations"}, {"term": "RCR", "def": "RC Respond"}, {"term": "RCS", "def": "RT Customer Service / Red Cross Square"}, {"term": "RD", "def": "Restricted Disability"}, {"term": "RDCC", "def": "Regional Disaster Coordination Center / Regional Disaster Call Center (“The Bridge”)"}, {"term": "RDO", "def": "Regional Disaster Officer"}, {"term": "RDPO", "def": "Regional Disaster Program Officer"}, {"term": "RDT", "def": "Regional Deployment Team"}, {"term": "RDTO", "def": "Regional Disaster Table of Organization"}, {"term": "REU", "def": "Reunification / Regional Executive"}, {"term": "REACT", "def": "Radio Emergency Associated Communications / Team"}, {"term": "REAP", "def": "Real Estate Approval Process"}, {"term": "REC", "def": "Recovery"}, {"term": "REF", "def": "Refugee Operation"}, {"term": "REFAM", "def": "Real Estate and Fixed Asset Management"}, {"term": "REFIT", "def": "Real Estate, Finance, and IT"}, {"term": "REM", "def": "Real Estate Management"}, {"term": "REO", "def": "Regional Executive Officer"}, {"term": "RES", "def": "Real Estate Services / Response Services"}, {"term": "ReSAT", "def": "Remote Support Administrative Team"}, {"term": "REST", "def": "Representative State Transfer"}, {"term": "REV", "def": "Review"}, {"term": "RF", "def": "Restricted Financial / Radio Frequency"}, {"term": "RFD", "def": "Request for Decision / Resolved False Duplicate"}, {"term": "RFI", "def": "Request for Information"}, {"term": "RFID", "def": "Radio Frequency Identification"}, {"term": "RFL", "def": "Restoring Family Links / Reconnecting Family Links"}, {"term": "RFP", "def": "Request for Proposal"}, {"term": "RFS", "def": "Request for Service"}, {"term": "RHA", "def": "Rapid Health Assessment"}, {"term": "RICE", "def": "Rest, Immobilize, Cold, Elevate / Response, Investigations, Compliance, and Ethics"}, {"term": "RID", "def": "Recognize, Intrusion, Distraction"}, {"term": "RIDC", "def": "Recovery and Individual Care"}, {"term": "RISE", "def": "Recruitment Integration and Systems Excellence"}, {"term": "RITA", "def": "Resilience in the Americas"}, {"term": "RIV", "def": "Reimagining Volunteerism"}, {"term": "RM", "def": "Medical Restriction / Relationship Manager"}, {"term": "RMA", "def": "Return Material Authorization"}, {"term": "RM/FR", "def": "Resource Mobilization/Fundraising"}, {"term": "RMS", "def": "Resource Mobilization and Support"}, {"term": "RMT", "def": "Regional Management Team"}, {"term": "RMW", "def": "Regulated Medical Waste"}, {"term": "RN", "def": "Registered Nurse"}, {"term": "RNA", "def": "Rapid Needs Assessment"}, {"term": "RNL", "def": "Regional Nurse Leader"}, {"term": "ROC", "def": "Regional Operations Center"}, {"term": "ROI", "def": "Release of Information"}, {"term": "ROMMR", "def": "Regional Operations Monthly / Management Report"}, {"term": "ROSC", "def": "Return of Spontaneous Circulation"}, {"term": "ROW", "def": "Right of Way"}, {"term": "RP", "def": "Restricted Pending"}, {"term": "RPA", "def": "Recovery, Planning and Assistance"}, {"term": "RPCV", "def": "Returned Peace Corps Volunteer"}, {"term": "RPL", "def": "Regional Program Lead"}, {"term": "RPP", "def": "Respiratory Protection Program"}, {"term": "RR", "def": "Relative Risk"}, {"term": "RRA", "def": "Regulatory Risk Assessment"}, {"term": "RRC", "def": "Russian Red Cross"}, {"term": "RRCC", "def": "Regional Response Coordination Center"}, {"term": "RRL", "def": "Reunification Request Log"}, {"term": "RRR", "def": "Registration Record Request"}, {"term": "RRT", "def": "Rapid Response Team / Regional Response Team / Regional Readiness Target"}, {"term": "RSF", "def": "Recovery Support Function"}, {"term": "RSMO", "def": "Regularly Scheduled Mobile Operation"}, {"term": "RSP", "def": "Region Specific Procedure"}, {"term": "RSSTO", "def": "Regional Steady-State Table of Organization"}, {"term": "RT", "def": "Real Time"}, {"term": "RTM", "def": "Requirements Traceability Matrix"}, {"term": "RVI", "def": "Rental Vehicle Initiative"}, {"term": "RVSO", "def": "Regional Volunteer Services Officer"}, {"term": "RWI", "def": "Recreational Water Illnesses"}, {"term": "RWTC", "def": "Ready When the Time Comes"}, {"term": "S&P", "def": "Standards and Procedures"}, {"term": "SA", "def": "Service Associate / Salvation Army"}, {"term": "SaaS", "def": "Software as a Service"}, {"term": "SABA", "def": "Learning Management System (LMS)"}, {"term": "SABC", "def": "Suction, Airway, Breathing, and Circulation"}, {"term": "SAC", "def": "Scientific Advisory Council"}, {"term": "SADS", "def": "Situational Awareness and Decision Support"}, {"term": "SAF", "def": "Service to the Armed Forces"}, {"term": "SAFGP", "def": "Service to the Armed Forces Giving Program"}, {"term": "SAHH", "def": "Self-Administered Health History"}, {"term": "SALTT", "def": "Size, Amount, Location, Type of Item, Time"}, {"term": "SAMHSA", "def": "Substance Abuse and Mental Health / Services Administration"}, {"term": "SAR", "def": "Search and Rescue / Suspicious Activity Report / Summary Annual Report"}, {"term": "SARC", "def": "Syrian Arab Red Cross"}, {"term": "SART", "def": "State Animal Response Team"}, {"term": "SAS", "def": "Shared Administrative Services"}, {"term": "SATERN", "def": "Salvation Army Team Emergency / Radio Network"}, {"term": "SAW", "def": "Salary Adjustment Worksheet"}, {"term": "SBA", "def": "Security Badge Access Form"}, {"term": "SBC", "def": "Southern Baptist Convention"}, {"term": "SBDR", "def": "Southern Baptist Disaster Relief"}, {"term": "SBPO", "def": "Service Blood Program Office"}, {"term": "SC", "def": "Supply Chain / Service Center"}, {"term": "SCA", "def": "Sudden Cardiac Arrest"}, {"term": "SCBA", "def": "Self-contained Breathing Apparatus"}, {"term": "SCC", "def": "State Coordinating Chapter"}, {"term": "SCDAA", "def": "Sickle Cell Disease Association of America"}, {"term": "SCIA", "def": "Shelter Client Information Application"}, {"term": "SCIF", "def": "Shelter Client Information Form"}, {"term": "SCIP", "def": "Strategic Capital Improvement Program"}, {"term": "SCM", "def": "Service Center Manager / Supply Chain Management"}, {"term": "SCO", "def": "State Coordinating Officer"}, {"term": "SCORM", "def": "Sharable Content Object Reference Model"}, {"term": "SCREM", "def": "Supply Chain and Real Estate Management"}, {"term": "SCU", "def": "Self-Contained Unit"}, {"term": "SCV", "def": "Self-Contained Blood Collection Vehicle"}, {"term": "SD", "def": "Site Director"}, {"term": "SDA", "def": "Service Delivery Area / Seventh Day Adventist"}, {"term": "SDG", "def": "Sustainable Development Goals"}, {"term": "SDI", "def": "Service Delivery Impact"}, {"term": "SDLC", "def": "Software Development Lifecycle"}, {"term": "SDP", "def": "Service Delivery Plan / Single Donor Platelets"}, {"term": "SDPM", "def": "Senior Disaster Program Manager"}, {"term": "SDS", "def": "Service Delivery Site"}, {"term": "SDSM", "def": "Service Delivery Site Management"}, {"term": "SDU", "def": "Service Delivery Unit"}, {"term": "SEC", "def": "Southeast and Coastal Georgia"}, {"term": "SECAR", "def": "Southeast and Caribbean Division"}, {"term": "SEO", "def": "Search Engine Optimization"}, {"term": "SEOC", "def": "State Emergency Operations Center"}, {"term": "SEPD", "def": "Supply or Equipment Problem or Deficiency"}, {"term": "SERV", "def": "Supply Emergency Response Vehicle"}, {"term": "SFA", "def": "Standard First Aid"}, {"term": "SFAR", "def": "Special Funds Activity Report"}, {"term": "SFCOE", "def": "Salesforce Center of Excellence"}, {"term": "SFD", "def": "Single Family Dwelling"}, {"term": "SFE", "def": "Shelter Fundamentals Exercise"}, {"term": "SFF", "def": "Single-family Fire"}, {"term": "SFG", "def": "Special Forces Group / Shelter Field Guide"}, {"term": "SFHA", "def": "Special Flood Hazard Area"}, {"term": "SFI", "def": "Strategic Fundraising Initiative"}, {"term": "SH", "def": "Sheltering"}, {"term": "SI", "def": "Sensitive Information"}, {"term": "SID", "def": "Supervision in Disaster"}, {"term": "SIDS", "def": "Sudden Infant Death Syndrome"}, {"term": "SIM", "def": "State Incident Management"}, {"term": "SIP", "def": "Select Investment Program / Shelter in Place"}, {"term": "SITREP", "def": "Situation Report"}, {"term": "SLA", "def": "Service Level Agreement"}, {"term": "SLC", "def": "State Lead Chapter"}, {"term": "SLOSH", "def": "Sea, Lake, and Overland Surges from Hurricanes"}, {"term": "SM", "def": "Staff Support / Station Manager / Shelter Manager"}, {"term": "SME", "def": "Subject Matter Expert"}, {"term": "SMI", "def": "Serious Mental Illness / Services at Military Installations"}, {"term": "SMS", "def": "Text Messages"}, {"term": "SMVN", "def": "Service to Military and Veterans Hospitals"}, {"term": "SO", "def": "Service Only Case / Safety Officer"}, {"term": "SOAP", "def": "Strategic Opportunity Assessment Project / Subjective, Objective, Assessment, and Plan"}, {"term": "SOC", "def": "Secretary’s Operation Center / Standard of Care"}, {"term": "SOE", "def": "Standards of Excellence / State of Emergency"}, {"term": "SOG", "def": "Standard Operating Guidelines"}, {"term": "SOI", "def": "Statement of Intent"}, {"term": "SOM", "def": "Shelter Operations Manager"}, {"term": "SOP", "def": "Standard Operating Procedure / Standards of Performance / Standards of Practice"}, {"term": "SORCE", "def": "Select One Red Cross Endowment Fund"}, {"term": "SOU", "def": "Statement of Understanding"}, {"term": "SP", "def": "Standards and Procedures"}, {"term": "SPD", "def": "Summary Plan Description"}, {"term": "SPDMS", "def": "Senior Disaster Program Managers"}, {"term": "SPG", "def": "Special Projects Grants"}, {"term": "SPLASH", "def": "Special Program to List Amplitudes of Surges / From Hurricanes"}, {"term": "SPM", "def": "Senior Program Manager"}, {"term": "SPOC", "def": "Service at the Point of Contact"}, {"term": "SPS", "def": "Staff Planning and Support"}, {"term": "SPT", "def": "Supply and Procurement Tracker"}, {"term": "SQL", "def": "Structured Query Language"}, {"term": "SQUIPP", "def": "Safety, Quality, Identity, Purity, Potency"}, {"term": "SR", "def": "Staff Relations"}, {"term": "SRA", "def": "Shelter Resident Assessment"}, {"term": "SRAO", "def": "Supplemental Recreational Activities Overseas"}, {"term": "SRDL", "def": "State Relations Disaster Liaison"}, {"term": "SRE", "def": "Stamped Reply Envelope"}, {"term": "SRMS", "def": "Shelter Readiness Management System"}, {"term": "SRP", "def": "September 11 Recovery Program / Shelter Readiness Program"}, {"term": "SRR", "def": "Software Requirements Review"}, {"term": "SRS", "def": "Solution Requirements Specification"}, {"term": "SRT", "def": "Spiritual Care Response Team / Shelter Resident Transition"}, {"term": "SRV", "def": "Supply Emergency Response Vehicle"}, {"term": "SS", "def": "Staff Services"}, {"term": "SSC", "def": "Shared Services Center / State Service Council"}, {"term": "SSDA", "def": "State Service Delivery Area (“Gap Area”)"}, {"term": "SSDM", "def": "SmartSolve Document Management"}, {"term": "SSG", "def": "Shelter Support Group"}, {"term": "SSI", "def": "School Safety Initiative / Sensitive Security Information"}, {"term": "SSL", "def": "Secure Sockets Layer"}, {"term": "SSN", "def": "Social Security Number"}, {"term": "SSO", "def": "Single Sign-On"}, {"term": "SSP", "def": "Sector Specific Plan"}, {"term": "SST", "def": "Sport Safety Training"}, {"term": "SSU", "def": "Situation Unit"}, {"term": "STA", "def": "Standardized Assistance / Sound the Alarm"}, {"term": "STAART", "def": "Strategy Through Applied Analytics and / Research"}, {"term": "STAT", "def": "Immediately"}, {"term": "STDO", "def": "Special Travel on Disaster Relief Operation"}, {"term": "STLF", "def": "Short Term Liquid Fund"}, {"term": "STNA", "def": "State Tested Nurse Assistant"}, {"term": "STR", "def": "Short Tandem Repeat"}, {"term": "SU", "def": "Situation Unit"}, {"term": "SUAT", "def": "Site User Acceptance Test"}, {"term": "SUP", "def": "Supply"}, {"term": "SUV", "def": "Spontaneous Uninvited Volunteer"}, {"term": "SV", "def": "Supervisor"}, {"term": "SVMT", "def": "Supporting Volunteers and Managing Teams"}, {"term": "SVP", "def": "Senior Vice President"}, {"term": "SVW", "def": "Supervising Volunteers Workshop"}, {"term": "SW", "def": "Staff Health Services, Staff Wellness"}, {"term": "SWaRM", "def": "South West and Rocky Mountain Division"}, {"term": "SWIFT", "def": "Safe and Well Information Field Team"}, {"term": "SWL", "def": "Safe and Well Linking"}, {"term": "SXD", "def": "Self-Exclusion Deferral"}, {"term": "SYS", "def": "Recovery Systems Support / Systems"}, {"term": "TA", "def": "Travel Authority / Team Approach / Threat Assessment / Temporary Authority"}, {"term": "TAC", "def": "Transfusion Advisory Committee"}, {"term": "TACO", "def": "Transfusion-Associated Circulatory Overload"}, {"term": "TAD", "def": "Temporary Additional Duty"}, {"term": "TAG", "def": "Technical Advisory Group"}, {"term": "TAR", "def": "Technical Assistance Request"}, {"term": "TARF", "def": "Triage and Referral Center"}, {"term": "T&M", "def": "Travel and Maintenance"}, {"term": "T&R", "def": "Trustworthy and Reliable"}, {"term": "TBA", "def": "To Be Announced"}, {"term": "TBD", "def": "To Be Determined"}, {"term": "TCPA", "def": "Telephone Consumer Protection Act"}, {"term": "TD", "def": "Tropical Depression / Technical Document"}, {"term": "TDD", "def": "Telecommunication Device for the Deaf"}, {"term": "TDE", "def": "Temporary Disaster Employee"}, {"term": "TDY", "def": "Temporary Duty"}, {"term": "TEMA", "def": "Total Emergency Management Association"}, {"term": "TEP", "def": "Temporary Evacuation Point"}, {"term": "TF", "def": "Task Force"}, {"term": "2FA", "def": "Two-Factor Authentication"}, {"term": "TGH", "def": "To Get Home"}, {"term": "TH", "def": "Temporary (Disaster) Housing"}, {"term": "THIRA", "def": "Threat and Hazard Identification and / Risk Assessment"}, {"term": "TIMS", "def": "Technology Information Management System"}, {"term": "TIN", "def": "Tax Identification Number"}, {"term": "TIP", "def": "Training Implementation Plan"}, {"term": "TLD", "def": "Training and Leadership Development"}, {"term": "TMA", "def": "Transcription-Mediated Amplification"}, {"term": "TMRG", "def": "Team Member Resource Group"}, {"term": "TO", "def": "Table of Organization"}, {"term": "TOD", "def": "Talent and Organization Development"}, {"term": "TOO", "def": "Table of Organization"}, {"term": "TOR", "def": "Tornado, Cyclone"}, {"term": "TPFDL", "def": "Time-Based Field Deployment List"}, {"term": "TPR", "def": "Temperature, Pulse, Respirations"}, {"term": "TR", "def": "Training. Transfusion Reaction"}, {"term": "TRA", "def": "Transportation"}, {"term": "TRMS", "def": "Test Result Management System"}, {"term": "TRN", "def": "Training"}, {"term": "TRP", "def": "Tsunami Recovery Program"}, {"term": "TS", "def": "Tropical Storm / Team Supervisor"}, {"term": "TSA", "def": "The Salvation Army / Transportation Safety Administration"}, {"term": "TSC", "def": "Training Support Center"}, {"term": "TSG", "def": "Transportation Specialist Guidebook"}, {"term": "TSE", "def": "Transmissible Spongiform Encephalopathies"}, {"term": "TSL", "def": "Transport Security Layer"}, {"term": "TSS", "def": "Transaction Support Specialist"}, {"term": "TTT", "def": "Train-the-Trainer"}, {"term": "TTX", "def": "Tabletop Exercise"}, {"term": "2CDO", "def": "Two Consecutive Days Off"}, {"term": "TWP", "def": "Together We Prepare"}, {"term": "TWS", "def": "Transaction Workshop Series"}, {"term": "UAC", "def": "Unaccompanied Children"}, {"term": "UAM", "def": "Unaccompanied Minor"}, {"term": "UAT", "def": "User Acceptance Test"}, {"term": "UC", "def": "Unified Command"}, {"term": "UCF", "def": "Universal Communications Format"}, {"term": "UDHQ", "def": "Uniform Donor History Questionnaire"}, {"term": "UDM", "def": "Unsolicited Donations Management"}, {"term": "UEM", "def": "Unified Endpoint Management"}, {"term": "UFN", "def": "Until Further Notice"}, {"term": "UFR", "def": "Un-Funded Requirement"}, {"term": "UHH", "def": "Urgent Health Hazard"}, {"term": "UI", "def": "User Interface"}, {"term": "UKN", "def": "Unknown"}, {"term": "UMCOR", "def": "United Methodist Committee on Relief"}, {"term": "UMR", "def": "Unaccompanied Minor Registry"}, {"term": "UMVIM", "def": "United Methodist Volunteers in Mission"}, {"term": "UOM", "def": "Unit of Measure"}, {"term": "URL", "def": "Universal Record Locator"}, {"term": "USACE", "def": "Army Corps of Engineers"}, {"term": "USAR", "def": "Urban Search and Rescue"}, {"term": "USDA", "def": "U.S. Department of Agriculture"}, {"term": "USG", "def": "United States Government"}, {"term": "USP", "def": "United States Pharmacopeia"}, {"term": "USPHS", "def": "United States Public Health Service"}, {"term": "UTC", "def": "Coordinated Universal Time"}, {"term": "VAI", "def": "Volunteer Administration Institute"}, {"term": "VAST", "def": "Virtual Assignment Support Team"}, {"term": "VAVS", "def": "Veterans Affairs Volunteer Services"}, {"term": "VC", "def": "Volunteer Connection"}, {"term": "VCA", "def": "Vulnerability and Capacity Assessment"}, {"term": "VCC", "def": "Virtual Command Center"}, {"term": "VCN", "def": "Volunteer Connection"}, {"term": "VCS", "def": "Volunteer Connection System"}, {"term": "VDCT", "def": "Volunteer and Donations Coordination Team."}, {"term": "VEC", "def": "Volunteer Engagement Cycle"}, {"term": "VEM", "def": "Validation and Equipment Management"}, {"term": "VFAC", "def": "Virtual Family Assistance Center"}, {"term": "VIC", "def": "Volunteer Intake Center"}, {"term": "VID", "def": "Video-based Training"}, {"term": "VILT", "def": "Virtual Instructor-led Training"}, {"term": "VIN", "def": "Vehicle Selection Number"}, {"term": "VIPC", "def": "Volunteer Intake Processing Center"}, {"term": "VIST", "def": "Virtual Instructor Specialty Training"}, {"term": "VIP", "def": "Volunteer Intake-Processing"}, {"term": "VISTA", "def": "Volunteers in Service to America"}, {"term": "VITA", "def": "Volunteers in Technical Assistance"}, {"term": "VMA", "def": "Vehicle Maintenance Assistance"}, {"term": "VMS", "def": "Volunteer Management System"}, {"term": "VNA", "def": "Volunteer Needs Assessment"}, {"term": "VOA", "def": "Volunteers of America"}, {"term": "VOAD", "def": "Voluntary Organizations Active in Disaster"}, {"term": "VOL", "def": "Volunteer Staff"}, {"term": "VOLAG", "def": "Volunteer Organization Liaison Agency"}, {"term": "VPN", "def": "Virtual Private Network"}, {"term": "VR", "def": "Volunteer Relations"}, {"term": "VRI", "def": "Variant Research Institute"}, {"term": "VRR", "def": "Validation Readiness Review"}, {"term": "VS", "def": "Volunteer Services"}, {"term": "VSS", "def": "Volunteer Satisfaction Survey"}, {"term": "VST", "def": "Vehicle Selection Tool"}, {"term": "VTC", "def": "Volunteer Tracing Coordinator"}, {"term": "VTT", "def": "Virtual Transportation Team"}, {"term": "VVIC", "def": "Virtual Volunteer Intake Center"}, {"term": "VWP", "def": "Virtual Workplace"}, {"term": "WAN", "def": "Wide Area Network"}, {"term": "WAP", "def": "Wireless Access Point"}, {"term": "WASH", "def": "Water, Sanitation, and Hygiene"}, {"term": "WBS", "def": "Work Breakdown Structure"}, {"term": "WBT", "def": "Web-based Training"}, {"term": "WC", "def": "Whole Cycle"}, {"term": "W/C", "def": "Wheelchair"}, {"term": "WEBEOC", "def": "Web Emergency Operations Center"}, {"term": "WDR", "def": "World Disaster Report"}, {"term": "WF", "def": "Workforce"}, {"term": "WHO", "def": "World Health Organization"}, {"term": "WHP", "def": "Workplace Harassment Prevention"}, {"term": "WHS", "def": "Warehousing and Supply"}, {"term": "WI", "def": "Welfare Information"}, {"term": "WIB", "def": "Welfare Information Bulletin"}, {"term": "WIC", "def": "Worker-in-Charge"}, {"term": "WIH", "def": "Why I Help"}, {"term": "WMD", "def": "Weapons of Mass Destruction"}, {"term": "WMT", "def": "Weapons of Mass Terrorism"}, {"term": "WOM", "def": "Work Order Management"}, {"term": "WONIG", "def": "Where Our Need Is Greatest"}, {"term": "WPA", "def": "Workforce Planning and Acquisition"}, {"term": "WPR", "def": "Work Performance Review"}, {"term": "WR", "def": "World Renew"}, {"term": "WRCT", "def": "Water Rescue Competency Test"}, {"term": "WRS", "def": "Workplace Respect and Safety"}, {"term": "WSI", "def": "Water Safety Instructor"}, {"term": "W2W", "def": "When to Work"}, {"term": "WX", "def": "Weather"}, {"term": "XSS", "def": "Cross-Site Scripting"}, {"term": "YBR", "def": "Your Benefits Resources"}, {"term": "YPM", "def": "Yield Per Thousand"}, {"term": "YTD", "def": "Year to Date"}, {"term": "ZBA", "def": "Zero Balance Account"}, {"term": "ZC", "def": "Zone Coordinator"}]
+
+</script>
+<script>
+const THEMES = {
+  black: { bg:'#000000', fg:'#ffffff', sub:'#9a9a9a', card:'#141414', border:'#2a2a2a', accent:'#cc1f2c' },
+  blue:  { bg:'#0b2e6e', fg:'#ffe14d', sub:'#bcd0ff', card:'#0f3a8c', border:'#1d4faa', accent:'#ffe14d' },
+  white: { bg:'#ffffff', fg:'#000000', sub:'#666666', card:'#f2f2f2', border:'#dddddd', accent:'#b3121c' }
+};
+
+const SEED = [
+  { term:'RC', def:'Red Cross', links:[], fav:false },
+  { term:'ARC', def:'American Red Cross', links:['https://www.redcross.org'], fav:false },
+  { term:'ICRC', def:'International Committee of the Red Cross', links:['https://www.icrc.org'], fav:false },
+  { term:'IFRC', def:'International Federation of Red Cross and Red Crescent Societies', links:['https://www.ifrc.org'], fav:false },
+  { term:'DAT', def:'Disaster Action Team', links:[], fav:false }
+];
+
+// Researched from redcross.org, icrc.org, ifrc.org and Red Cross training/guideline sources.
+const WEB_ADDITIONS = [
+  { term:'ERV', def:'Emergency Response Vehicle — mobile unit that delivers food, relief supplies, and comfort to communities after a disaster', links:['https://www.redcross.org/about-us/our-work/disaster-relief.html'] },
+  { term:'ERU', def:'Emergency Response Unit — a standardized IFRC disaster relief team deployed when local infrastructure is damaged or overwhelmed', links:['https://www.ifrc.org'] },
+  { term:'DSHR', def:'Disaster Services Human Resources — the national system of trained volunteers deployed to large-scale disasters', links:[] },
+  { term:'AFES', def:'Armed Forces Emergency Services — Red Cross support connecting military members and their families during emergencies', links:['https://www.redcross.org'] },
+  { term:'BHQ', def:'Biomedical Services Headquarters — the division overseeing Red Cross blood collection and services', links:[] },
+  { term:'ADGP', def:'Annual Disaster Giving Program — recurring corporate/donor program that funds year-round disaster response readiness', links:[] },
+  { term:'CPR', def:'Cardiopulmonary Resuscitation — chest compressions and rescue breaths used to keep blood and oxygen moving during cardiac arrest', links:[] },
+  { term:'AED', def:'Automated External Defibrillator — a portable device that can shock the heart back into a normal rhythm', links:[] },
+  { term:'BLS', def:'Basic Life Support — foundational emergency care skills including CPR, used before advanced medical help arrives', links:[] },
+  { term:'ALS', def:'Advanced Life Support — higher-level emergency medical care, typically provided by paramedics', links:[] },
+  { term:'BVM', def:'Bag-Valve-Mask — a hand-held device used to manually ventilate a person who isn\u2019t breathing adequately', links:[] }
+];
+
+let entries = [];
+let currentTheme = 'black';
+let favOnly = false;
+let isAdmin = false;
+const ADMIN_PASSWORD = 'admin'; // client-side only — not real security, swap out before real deployment
+
+const el = (id) => document.getElementById(id);
+const root = document.documentElement;
+
+function applyTheme(name){
+  const t = THEMES[name] || THEMES.black;
+  root.style.setProperty('--bg', t.bg);
+  root.style.setProperty('--fg', t.fg);
+  root.style.setProperty('--sub', t.sub);
+  root.style.setProperty('--card', t.card);
+  root.style.setProperty('--border', t.border);
+  root.style.setProperty('--accent', t.accent);
+  document.querySelectorAll('.theme-opt[data-theme]').forEach(o=>{
+    o.classList.toggle('active', o.dataset.theme === name);
+  });
+}
+
+function normalize(s){
+  return (s||'').toLowerCase().replace(/[\s.\-]/g,'');
+}
+function normalizeText(s){
+  return (s||'').toLowerCase().trim().replace(/\s+/g,' ');
+}
+
+function render(){
+  const rawQuery = el('search').value;
+  const queries = rawQuery.split(',').map(s=>s.trim()).filter(Boolean);
+  const qTerms = queries.map(q=>normalize(q));
+  const qTexts = queries.map(q=>normalizeText(q));
+  let list = entries.filter(e=>{
+    if (favOnly && !e.fav) return false;
+    if (queries.length === 0) return true;
+    const term = normalize(e.term);
+    const def = normalizeText(e.def);
+    return queries.some((_, i) => term.includes(qTerms[i]) || def.includes(qTexts[i]));
+  });
+  list = list.sort((a,b)=>{
+    if (!!b.fav !== !!a.fav) return (b.fav?1:0) - (a.fav?1:0);
+    if (queries.length === 0) return 0;
+    const at = normalize(a.term), bt = normalize(b.term);
+    const scoreFor = (t) => {
+      let best = 3;
+      qTerms.forEach(q=>{
+        const s = t === q ? 0 : t.startsWith(q) ? 1 : t.includes(q) ? 2 : 3;
+        if (s < best) best = s;
+      });
+      return best;
+    };
+    return scoreFor(at) - scoreFor(bt);
+  });
+
+  el('entryCountLabel').textContent = entries.length + (entries.length===1 ? ' entry' : ' entries');
+  el('favFilter').classList.toggle('active', favOnly);
+  el('clearBtn').classList.toggle('show', rawQuery.length > 0);
+  el('favFilter').textContent = favOnly ? '★' : '☆';
+
+  const container = el('results');
+  container.innerHTML = '';
+
+  if (entries.length === 0){
+    container.innerHTML = '<div class="empty">No acronyms yet.<br>Tap + to add your first entry.</div>';
+    return;
+  }
+  if (list.length === 0){
+    container.innerHTML = favOnly
+      ? '<div class="empty">No favorites yet.<br>Tap the star on an entry to save it here.</div>'
+      : '<div class="empty">No matches for "' + escapeHtml(el('search').value) + '"</div>';
+    return;
+  }
+
+  list.forEach((e)=>{
+    const realIdx = entries.indexOf(e);
+    const card = document.createElement('div');
+    card.className = 'entry';
+    const linksHtml = (e.links||[]).filter(Boolean).map(l=>
+      `<a href="${escapeAttr(l)}" target="_blank" rel="noopener">${escapeHtml(l)}</a>`
+    ).join('');
+    card.innerHTML = `
+      <div class="entry-top">
+        <div class="term">${escapeHtml(e.term)}</div>
+        <div class="entry-actions">
+          <div class="entry-actions-top">
+            <button class="star-btn ${e.fav ? 'on' : ''}" data-idx="${realIdx}" aria-label="Toggle favorite">${e.fav ? '★' : '☆'}</button>
+            ${isAdmin ? `<button class="del" data-idx="${realIdx}">remove</button>` : ''}
+          </div>
+          ${isAdmin ? `<button class="edit-btn" data-idx="${realIdx}">edit</button>` : ''}
+        </div>
+      </div>
+      <div class="def">${escapeHtml(e.def)}</div>
+      ${linksHtml ? `<div class="links">${linksHtml}</div>` : ''}
+    `;
+    container.appendChild(card);
+  });
+
+  el('addBtn').style.display = isAdmin ? 'flex' : 'none';
+
+  container.querySelectorAll('.del').forEach(btn=>{
+    btn.addEventListener('click', async (ev)=>{
+      const i = parseInt(ev.target.dataset.idx, 10);
+      const removed = entries[i];
+      if (removed) removedTerms.add(normalize(removed.term));
+      entries.splice(i,1);
+      await Promise.all([persistEntries(), persistRemovedTerms()]);
+      render();
+    });
+  });
+
+  container.querySelectorAll('.star-btn').forEach(btn=>{
+    btn.addEventListener('click', async (ev)=>{
+      const i = parseInt(ev.target.dataset.idx, 10);
+      entries[i].fav = !entries[i].fav;
+      entries[i].src = 'user'; // promote so the favorite survives future loads
+      await persistEntries();
+      render();
+    });
+  });
+
+  container.querySelectorAll('.edit-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const i = parseInt(btn.dataset.idx, 10);
+      openEditModal(i);
+    });
+  });
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s){ return escapeHtml(s); }
+
+let removedTerms = new Set();
+
+async function persistEntries(){
+  try{
+    const userOwned = entries.filter(e => e.src === 'user');
+    await window.storage.set('rc-acronym-user-entries', JSON.stringify(userOwned), false);
+  }catch(err){
+    // Storage isn't available/reliable right now — keep working in-memory for this session.
+  }
+}
+async function persistRemovedTerms(){
+  try{
+    await window.storage.set('rc-acronym-removed-terms', JSON.stringify([...removedTerms]), false);
+  }catch(err){
+    // Same as above — non-fatal, app keeps working without persistence.
+  }
+}
+async function persistTheme(name){
+  try{
+    await window.storage.set('rc-acronym-theme', name, false);
+  }catch(err){
+    // Same as above — non-fatal, app keeps working without persistence.
+  }
+}
+
+async function loadData(){
+  let userEntries = null;
+  let hadStoredUserEntries = false;
+
+  try{
+    const res = await window.storage.get('rc-acronym-user-entries', false);
+    if (res && res.value){ userEntries = JSON.parse(res.value); hadStoredUserEntries = true; }
+  }catch(err){ /* key doesn't exist yet — fine */ }
+
+  // Fall back to the older single-key format from before this split, if present.
+  if (userEntries === null){
+    try{
+      const legacy = await window.storage.get('rc-acronym-entries', false);
+      if (legacy && legacy.value){
+        const parsed = JSON.parse(legacy.value);
+        if (Array.isArray(parsed) && parsed.length && parsed.length < 100){
+          userEntries = parsed;
+        }
+      }
+    }catch(err){ /* nothing there either — fine */ }
+  }
+
+  if (userEntries === null){
+    // First run: seed with the starter set + web-researched additions (small, safe to store).
+    userEntries = SEED.concat(WEB_ADDITIONS.map(a=>({ term:a.term, def:a.def, links:a.links||[], fav:false })));
+  }
+  userEntries.forEach(e => { e.src = 'user'; if (e.fav === undefined) e.fav = false; if (!e.links) e.links = []; });
+
+  try{
+    const res = await window.storage.get('rc-acronym-removed-terms', false);
+    if (res && res.value) removedTerms = new Set(JSON.parse(res.value));
+  }catch(err){ removedTerms = new Set(); }
+
+  const userTerms = new Set(userEntries.map(e=>normalize(e.term)));
+
+  // Merge in the large reference document — kept purely in-memory, never written to storage.
+  let docEntries = [];
+  const dataEl = document.getElementById('doc-batch-data');
+  if (dataEl){
+    try{
+      const raw = JSON.parse(dataEl.textContent);
+      docEntries = raw
+        .filter(a => !userTerms.has(normalize(a.term)) && !removedTerms.has(normalize(a.term)))
+        .map(a => ({ term:a.term, def:a.def, links:[], fav:false, src:'doc' }));
+    }catch(e){ docEntries = []; }
+  }
+
+  entries = userEntries.concat(docEntries);
+
+  // Persist the starter seed on very first run so favorites/edits on it aren't lost.
+  if (!hadStoredUserEntries){
+    await persistEntries();
+  }
+
+  try{
+    const t = await window.storage.get('rc-acronym-theme', false);
+    currentTheme = t && t.value ? t.value : 'black';
+  }catch(err){
+    currentTheme = 'black';
+  }
+  applyTheme(currentTheme);
+  render();
+}
+
+// Settings sheet
+el('dotsBtn').addEventListener('click', ()=>{
+  el('overlay').classList.add('show');
+  el('sheet').classList.add('show');
+});
+function closeSheet(){
+  el('overlay').classList.remove('show');
+  el('sheet').classList.remove('show');
+}
+el('overlay').addEventListener('click', closeSheet);
+document.querySelectorAll('.theme-opt[data-theme]').forEach(opt=>{
+  opt.addEventListener('click', async ()=>{
+    currentTheme = opt.dataset.theme;
+    applyTheme(currentTheme);
+    await persistTheme(currentTheme);
+    closeSheet();
+  });
+});
+
+// Search
+el('search').addEventListener('input', render);
+el('clearBtn').addEventListener('click', ()=>{
+  el('search').value = '';
+  el('search').focus();
+  render();
+});
+
+// Favorites filter
+el('favFilter').addEventListener('click', ()=>{
+  favOnly = !favOnly;
+  render();
+});
+
+// Add / edit entry modal
+let editingIndex = null;
+
+function openAddModal(){
+  editingIndex = null;
+  el('modalTitle').textContent = 'Add acronym';
+  el('fTerm').value = '';
+  el('fDef').value = '';
+  el('fLink').value = '';
+  el('modalOverlay').classList.add('show');
+  setTimeout(()=>el('fTerm').focus(), 50);
+}
+
+function openEditModal(idx){
+  const e = entries[idx];
+  if (!e) return;
+  editingIndex = idx;
+  el('modalTitle').textContent = 'Edit acronym';
+  el('fTerm').value = e.term || '';
+  el('fDef').value = e.def || '';
+  el('fLink').value = (e.links && e.links[0]) || '';
+  el('modalOverlay').classList.add('show');
+  setTimeout(()=>el('fTerm').focus(), 50);
+}
+
+el('addBtn').addEventListener('click', openAddModal);
+el('cancelBtn').addEventListener('click', ()=>{
+  el('modalOverlay').classList.remove('show');
+});
+el('modalOverlay').addEventListener('click', (e)=>{
+  if (e.target === el('modalOverlay')) el('modalOverlay').classList.remove('show');
+});
+el('saveBtn').addEventListener('click', async ()=>{
+  const term = el('fTerm').value.trim();
+  const def = el('fDef').value.trim();
+  const link = el('fLink').value.trim();
+  if (!term || !def) return;
+
+  const wasAdd = editingIndex === null;
+  if (editingIndex !== null && entries[editingIndex]){
+    const existing = entries[editingIndex];
+    existing.term = term;
+    existing.def = def;
+    existing.links = link ? [link] : [];
+    existing.src = 'user'; // promote so edits to a document-sourced entry are saved
+  } else {
+    entries.push({ term, def, links: link ? [link] : [], fav: false, src: 'user' });
+  }
+
+  await persistEntries();
+  el('modalOverlay').classList.remove('show');
+  editingIndex = null;
+  if (wasAdd) el('search').value = '';
+  render();
+});
+
+// Admin login
+function updateAdminRow(){
+  el('adminRowLabel').textContent = isAdmin ? 'Log out (Admin)' : 'Log in as Admin';
+}
+el('adminRow').addEventListener('click', ()=>{
+  closeSheet();
+  if (isAdmin){
+    isAdmin = false;
+    updateAdminRow();
+    render();
+  } else {
+    el('fPassword').value = '';
+    el('loginModalOverlay').classList.add('show');
+    setTimeout(()=>el('fPassword').focus(), 50);
+  }
+});
+el('loginCancelBtn').addEventListener('click', ()=>{
+  el('loginModalOverlay').classList.remove('show');
+});
+el('loginModalOverlay').addEventListener('click', (e)=>{
+  if (e.target === el('loginModalOverlay')) el('loginModalOverlay').classList.remove('show');
+});
+function attemptLogin(){
+  const pw = el('fPassword').value;
+  if (pw === ADMIN_PASSWORD){
+    isAdmin = true;
+    el('loginModalOverlay').classList.remove('show');
+    updateAdminRow();
+    render();
+  } else {
+    el('fPassword').style.borderColor = '#cc1f2c';
+    el('fPassword').value = '';
+    el('fPassword').placeholder = 'Incorrect password';
+    setTimeout(()=>{ el('fPassword').style.borderColor = ''; }, 1200);
+  }
+}
+el('loginSaveBtn').addEventListener('click', attemptLogin);
+el('fPassword').addEventListener('keydown', (e)=>{
+  if (e.key === 'Enter') attemptLogin();
+});
+updateAdminRow();
+
+loadData();
+</script>
+</body>
+</html>
