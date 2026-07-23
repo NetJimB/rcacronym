@@ -420,60 +420,43 @@ function escapeAttr(s){ return escapeHtml(s); }
 
 let removedTerms = new Set();
 
-async function persistEntries(){
+function persistEntries(){
   try{
     const userOwned = entries.filter(e => e.src === 'user');
-    await window.storage.set('rc-acronym-user-entries', JSON.stringify(userOwned), false);
+    localStorage.setItem('rc-acronym-user-entries', JSON.stringify(userOwned));
   }catch(err){
-    // Storage isn't available/reliable right now — keep working in-memory for this session.
+    // e.g. private browsing mode with storage disabled — app keeps working in-memory.
   }
 }
-async function persistRemovedTerms(){
+function persistRemovedTerms(){
   try{
-    await window.storage.set('rc-acronym-removed-terms', JSON.stringify([...removedTerms]), false);
-  }catch(err){
-    // Same as above — non-fatal, app keeps working without persistence.
-  }
+    localStorage.setItem('rc-acronym-removed-terms', JSON.stringify([...removedTerms]));
+  }catch(err){ /* non-fatal */ }
 }
-async function persistTheme(name){
+function persistTheme(name){
   try{
-    await window.storage.set('rc-acronym-theme', name, false);
-  }catch(err){
-    // Same as above — non-fatal, app keeps working without persistence.
-  }
+    localStorage.setItem('rc-acronym-theme', name);
+  }catch(err){ /* non-fatal */ }
 }
 
-async function loadData(){
+function loadData(){
   let userEntries = null;
   let hadStoredUserEntries = false;
 
   try{
-    const res = await window.storage.get('rc-acronym-user-entries', false);
-    if (res && res.value){ userEntries = JSON.parse(res.value); hadStoredUserEntries = true; }
-  }catch(err){ /* key doesn't exist yet — fine */ }
-
-  // Fall back to the older single-key format from before this split, if present.
-  if (userEntries === null){
-    try{
-      const legacy = await window.storage.get('rc-acronym-entries', false);
-      if (legacy && legacy.value){
-        const parsed = JSON.parse(legacy.value);
-        if (Array.isArray(parsed) && parsed.length && parsed.length < 100){
-          userEntries = parsed;
-        }
-      }
-    }catch(err){ /* nothing there either — fine */ }
-  }
+    const raw = localStorage.getItem('rc-acronym-user-entries');
+    if (raw){ userEntries = JSON.parse(raw); hadStoredUserEntries = true; }
+  }catch(err){ /* key doesn't exist yet, or storage unavailable — fine */ }
 
   if (userEntries === null){
-    // First run: seed with the starter set + web-researched additions (small, safe to store).
+    // First run: seed with the starter set + web-researched additions.
     userEntries = SEED.concat(WEB_ADDITIONS.map(a=>({ term:a.term, def:a.def, links:a.links||[], fav:false })));
   }
   userEntries.forEach(e => { e.src = 'user'; if (e.fav === undefined) e.fav = false; if (!e.links) e.links = []; });
 
   try{
-    const res = await window.storage.get('rc-acronym-removed-terms', false);
-    if (res && res.value) removedTerms = new Set(JSON.parse(res.value));
+    const raw = localStorage.getItem('rc-acronym-removed-terms');
+    if (raw) removedTerms = new Set(JSON.parse(raw));
   }catch(err){ removedTerms = new Set(); }
 
   const userTerms = new Set(userEntries.map(e=>normalize(e.term)));
@@ -494,12 +477,11 @@ async function loadData(){
 
   // Persist the starter seed on very first run so favorites/edits on it aren't lost.
   if (!hadStoredUserEntries){
-    await persistEntries();
+    persistEntries();
   }
 
   try{
-    const t = await window.storage.get('rc-acronym-theme', false);
-    currentTheme = t && t.value ? t.value : 'black';
+    currentTheme = localStorage.getItem('rc-acronym-theme') || 'black';
   }catch(err){
     currentTheme = 'black';
   }
