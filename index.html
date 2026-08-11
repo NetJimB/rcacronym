@@ -266,11 +266,11 @@ const THEMES = {
 };
 
 const SEED = [
-  { term:'RC', def:'Red Cross', links:[], fav:false },
-  { term:'ARC', def:'American Red Cross', links:['https://www.redcross.org'], fav:false },
-  { term:'ICRC', def:'International Committee of the Red Cross', links:['https://www.icrc.org'], fav:false },
-  { term:'IFRC', def:'International Federation of Red Cross and Red Crescent Societies', links:['https://www.ifrc.org'], fav:false },
-  { term:'DAT', def:'Disaster Action Team', links:[], fav:false }
+  { term:'RC', def:'Red Cross', links:[] },
+  { term:'ARC', def:'American Red Cross', links:['https://www.redcross.org'] },
+  { term:'ICRC', def:'International Committee of the Red Cross', links:['https://www.icrc.org'] },
+  { term:'IFRC', def:'International Federation of Red Cross and Red Crescent Societies', links:['https://www.ifrc.org'] },
+  { term:'DAT', def:'Disaster Action Team', links:[] }
 ];
 
 // Researched from redcross.org, icrc.org, ifrc.org and Red Cross training/guideline sources.
@@ -292,7 +292,10 @@ let entries = [];
 let currentTheme = 'black';
 let favOnly = false;
 let isAdmin = false;
-const ADMIN_PASSWORD = 'admin'; // client-side only — not real security, swap out before real deployment
+let favoriteTerms = new Set();
+let removedTerms = new Set();
+const ADMIN_PASSWORD = 'admin'; // must match the ADMIN_PASSWORD env var on the Lambda function
+const API_URL = 'https://ebjvhchhfj.execute-api.us-west-1.amazonaws.com/entries';
 
 const el = (id) => document.getElementById(id);
 const root = document.documentElement;
@@ -316,6 +319,9 @@ function normalize(s){
 function normalizeText(s){
   return (s||'').toLowerCase().trim().replace(/\s+/g,' ');
 }
+function isFav(e){
+  return favoriteTerms.has(normalize(e.term));
+}
 
 function render(){
   const rawQuery = el('search').value;
@@ -323,14 +329,14 @@ function render(){
   const qTerms = queries.map(q=>normalize(q));
   const qTexts = queries.map(q=>normalizeText(q));
   let list = entries.filter(e=>{
-    if (favOnly && !e.fav) return false;
+    if (favOnly && !isFav(e)) return false;
     if (queries.length === 0) return true;
     const term = normalize(e.term);
     const def = normalizeText(e.def);
     return queries.some((_, i) => term.includes(qTerms[i]) || def.includes(qTexts[i]));
   });
   list = list.sort((a,b)=>{
-    if (!!b.fav !== !!a.fav) return (b.fav?1:0) - (a.fav?1:0);
+    if (!!isFav(b) !== !!isFav(a)) return (isFav(b)?1:0) - (isFav(a)?1:0);
     if (queries.length === 0) return 0;
     const at = normalize(a.term), bt = normalize(b.term);
     const scoreFor = (t) => {
@@ -375,7 +381,7 @@ function render(){
         <div class="term">${escapeHtml(e.term)}</div>
         <div class="entry-actions">
           <div class="entry-actions-top">
-            <button class="star-btn ${e.fav ? 'on' : ''}" data-idx="${realIdx}" aria-label="Toggle favorite">${e.fav ? '★' : '☆'}</button>
+            <button class="star-btn ${isFav(e) ? 'on' : ''}" data-idx="${realIdx}" aria-label="Toggle favorite">${isFav(e) ? '★' : '☆'}</button>
             ${isAdmin ? `<button class="del" data-idx="${realIdx}">remove</button>` : ''}
           </div>
           ${isAdmin ? `<button class="edit-btn" data-idx="${realIdx}">edit</button>` : ''}
@@ -392,20 +398,24 @@ function render(){
   container.querySelectorAll('.del').forEach(btn=>{
     btn.addEventListener('click', async (ev)=>{
       const i = parseInt(ev.target.dataset.idx, 10);
-      const removed = entries[i];
-      if (removed) removedTerms.add(normalize(removed.term));
-      entries.splice(i,1);
-      await Promise.all([persistEntries(), persistRemovedTerms()]);
-      render();
+      const target = entries[i];
+      if (!target) return;
+      const result = await apiPost('remove', { id: target.id || undefined, term: normalize(target.term) });
+      if (result && result.ok){
+        entries.splice(i,1);
+        render();
+      } else {
+        alert('Could not remove — check your connection and try again.');
+      }
     });
   });
 
   container.querySelectorAll('.star-btn').forEach(btn=>{
-    btn.addEventListener('click', async (ev)=>{
+    btn.addEventListener('click', (ev)=>{
       const i = parseInt(ev.target.dataset.idx, 10);
-      entries[i].fav = !entries[i].fav;
-      entries[i].src = 'user'; // promote so the favorite survives future loads
-      await persistEntries();
+      const term = normalize(entries[i].term);
+      if (favoriteTerms.has(term)) favoriteTerms.delete(term); else favoriteTerms.add(term);
+      persistFavorites();
       render();
     });
   });
@@ -423,19 +433,33 @@ function escapeHtml(s){
 }
 function escapeAttr(s){ return escapeHtml(s); }
 
-let removedTerms = new Set();
-
-function persistEntries(){
+async function apiPost(action, payload){
   try{
-    const userOwned = entries.filter(e => e.src === 'user');
-    localStorage.setItem('rc-acronym-user-entries', JSON.stringify(userOwned));
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ action, pass: ADMIN_PASSWORD }, payload))
+    });
+    return await res.json();
   }catch(err){
-    // e.g. private browsing mode with storage disabled — app keeps working in-memory.
+    console.error('API request failed', err);
+    return { ok:false, error:'network' };
   }
 }
-function persistRemovedTerms(){
+
+async function apiFetchAll(){
   try{
-    localStorage.setItem('rc-acronym-removed-terms', JSON.stringify([...removedTerms]));
+    const res = await fetch(API_URL, { method:'GET' });
+    return await res.json();
+  }catch(err){
+    console.error('API fetch failed', err);
+    return null;
+  }
+}
+
+function persistFavorites(){
+  try{
+    localStorage.setItem('rc-acronym-favorites', JSON.stringify([...favoriteTerms]));
   }catch(err){ /* non-fatal */ }
 }
 function persistTheme(name){
@@ -444,46 +468,22 @@ function persistTheme(name){
   }catch(err){ /* non-fatal */ }
 }
 
-function loadData(){
-  let userEntries = null;
-  let hadStoredUserEntries = false;
-
-  try{
-    const raw = localStorage.getItem('rc-acronym-user-entries');
-    if (raw){ userEntries = JSON.parse(raw); hadStoredUserEntries = true; }
-  }catch(err){ /* key doesn't exist yet, or storage unavailable — fine */ }
-
-  if (userEntries === null){
-    // First run: seed with the starter set + web-researched additions.
-    userEntries = SEED.concat(WEB_ADDITIONS.map(a=>({ term:a.term, def:a.def, links:a.links||[], fav:false })));
-  }
-  userEntries.forEach(e => { e.src = 'user'; if (e.fav === undefined) e.fav = false; if (!e.links) e.links = []; });
-
-  try{
-    const raw = localStorage.getItem('rc-acronym-removed-terms');
-    if (raw) removedTerms = new Set(JSON.parse(raw));
-  }catch(err){ removedTerms = new Set(); }
-
-  const userTerms = new Set(userEntries.map(e=>normalize(e.term)));
-
-  // Merge in the large reference document — kept purely in-memory, never written to storage.
-  let docEntries = [];
+function buildStaticBaseline(){
+  const base = SEED.concat(WEB_ADDITIONS.map(a=>({ term:a.term, def:a.def, links:a.links||[] })));
   const dataEl = document.getElementById('doc-batch-data');
   if (dataEl){
     try{
-      const raw = JSON.parse(dataEl.textContent);
-      docEntries = raw
-        .filter(a => !userTerms.has(normalize(a.term)) && !removedTerms.has(normalize(a.term)))
-        .map(a => ({ term:a.term, def:a.def, links:[], fav:false, src:'doc' }));
-    }catch(e){ docEntries = []; }
+      JSON.parse(dataEl.textContent).forEach(a => base.push({ term:a.term, def:a.def, links:[] }));
+    }catch(e){ /* ignore malformed batch data */ }
   }
+  return base;
+}
 
-  entries = userEntries.concat(docEntries);
-
-  // Persist the starter seed on very first run so favorites/edits on it aren't lost.
-  if (!hadStoredUserEntries){
-    persistEntries();
-  }
+async function loadData(){
+  try{
+    const raw = localStorage.getItem('rc-acronym-favorites');
+    if (raw) favoriteTerms = new Set(JSON.parse(raw));
+  }catch(err){ favoriteTerms = new Set(); }
 
   try{
     currentTheme = localStorage.getItem('rc-acronym-theme') || 'black';
@@ -491,6 +491,25 @@ function loadData(){
     currentTheme = 'black';
   }
   applyTheme(currentTheme);
+
+  const staticBaseline = buildStaticBaseline();
+
+  // Show the static reference list immediately so the app isn't blank while the network call is in flight.
+  entries = staticBaseline.map(e => Object.assign({}, e, { src:'static' }));
+  render();
+
+  const apiData = await apiFetchAll();
+  if (apiData){
+    const apiEntries = (apiData.entries||[]).map(e => ({ id:e.id, term:e.term, def:e.def, links:e.links||[], src:'api' }));
+    const apiTerms = new Set(apiEntries.map(e=>normalize(e.term)));
+    removedTerms = new Set(apiData.removed||[]);
+    const staticFiltered = staticBaseline
+      .filter(e => !apiTerms.has(normalize(e.term)) && !removedTerms.has(normalize(e.term)))
+      .map(e => Object.assign({}, e, { src:'static' }));
+    entries = apiEntries.concat(staticFiltered);
+  } else {
+    console.warn('Could not reach the shared backend — showing local reference data only.');
+  }
   render();
 }
 
@@ -565,18 +584,39 @@ el('saveBtn').addEventListener('click', async ()=>{
   const link = el('fLink').value.trim();
   if (!term || !def) return;
 
+  const links = link ? [link] : [];
   const wasAdd = editingIndex === null;
-  if (editingIndex !== null && entries[editingIndex]){
+  el('saveBtn').disabled = true;
+
+  let result;
+  if (!wasAdd && entries[editingIndex]){
     const existing = entries[editingIndex];
-    existing.term = term;
-    existing.def = def;
-    existing.links = link ? [link] : [];
-    existing.src = 'user'; // promote so edits to a document-sourced entry are saved
+    if (existing.id){
+      result = await apiPost('edit', { id: existing.id, term, def, links });
+    } else {
+      result = await apiPost('edit', { term, def, links, origTerm: normalize(existing.term) });
+    }
+    if (result && result.ok){
+      existing.term = term;
+      existing.def = def;
+      existing.links = links;
+      existing.id = result.id;
+      existing.src = 'api';
+    }
   } else {
-    entries.push({ term, def, links: link ? [link] : [], fav: false, src: 'user' });
+    result = await apiPost('add', { term, def, links });
+    if (result && result.ok){
+      entries.push({ id: result.id, term, def, links, src:'api' });
+    }
   }
 
-  await persistEntries();
+  el('saveBtn').disabled = false;
+
+  if (!result || !result.ok){
+    alert('Could not save — check your connection and try again.');
+    return;
+  }
+
   el('modalOverlay').classList.remove('show');
   editingIndex = null;
   if (wasAdd) el('search').value = '';
