@@ -219,6 +219,19 @@
     <div class="theme-name" style="color:#e6e6e6;">White / Black</div>
     <div class="theme-check">✓</div>
   </div>
+  <div class="sheet-title" style="border-top:1px solid var(--border); margin-top:4px; padding-top:12px;">Sort</div>
+  <div class="theme-opt" data-sort="az">
+    <div class="theme-name" style="color:#fff;">A → Z</div>
+    <div class="theme-check">✓</div>
+  </div>
+  <div class="theme-opt" data-sort="za">
+    <div class="theme-name" style="color:#fff;">Z → A</div>
+    <div class="theme-check">✓</div>
+  </div>
+  <div class="theme-opt" data-sort="az-fav">
+    <div class="theme-name" style="color:#fff;">A → Z (Favorites first)</div>
+    <div class="theme-check">✓</div>
+  </div>
   <div class="sheet-title" style="border-top:1px solid var(--border); margin-top:4px; padding-top:12px;">Admin</div>
   <div class="theme-opt" id="adminRow">
     <div class="theme-name" id="adminRowLabel" style="color:#fff;">Log in as Admin</div>
@@ -290,6 +303,7 @@ const WEB_ADDITIONS = [
 
 let entries = [];
 let currentTheme = 'black';
+let currentSort = 'az';
 let favOnly = false;
 let isAdmin = false;
 let favoriteTerms = new Set();
@@ -310,6 +324,12 @@ function applyTheme(name){
   root.style.setProperty('--accent', t.accent);
   document.querySelectorAll('.theme-opt[data-theme]').forEach(o=>{
     o.classList.toggle('active', o.dataset.theme === name);
+  });
+}
+
+function applySortUI(){
+  document.querySelectorAll('.theme-opt[data-sort]').forEach(o=>{
+    o.classList.toggle('active', o.dataset.sort === currentSort);
   });
 }
 
@@ -336,9 +356,16 @@ function render(){
     return queries.some((_, i) => term.includes(qTerms[i]) || def.includes(qTexts[i]));
   });
   list = list.sort((a,b)=>{
-    if (!!isFav(b) !== !!isFav(a)) return (isFav(b)?1:0) - (isFav(a)?1:0);
     const at = normalize(a.term), bt = normalize(b.term);
-    if (queries.length === 0) return at.localeCompare(bt);
+
+    if (queries.length === 0){
+      if (currentSort === 'az-fav' && (!!isFav(b) !== !!isFav(a))){
+        return (isFav(b)?1:0) - (isFav(a)?1:0);
+      }
+      return currentSort === 'za' ? bt.localeCompare(at) : at.localeCompare(bt);
+    }
+
+    if (!!isFav(b) !== !!isFav(a)) return (isFav(b)?1:0) - (isFav(a)?1:0);
     const scoreFor = (t) => {
       let best = 3;
       qTerms.forEach(q=>{
@@ -467,6 +494,11 @@ function persistTheme(name){
     localStorage.setItem('rc-acronym-theme', name);
   }catch(err){ /* non-fatal */ }
 }
+function persistSort(name){
+  try{
+    localStorage.setItem('rc-acronym-sort', name);
+  }catch(err){ /* non-fatal */ }
+}
 
 function buildStaticBaseline(){
   const base = SEED.concat(WEB_ADDITIONS.map(a=>({ term:a.term, def:a.def, links:a.links||[] })));
@@ -491,6 +523,13 @@ async function loadData(){
     currentTheme = 'black';
   }
   applyTheme(currentTheme);
+
+  try{
+    currentSort = localStorage.getItem('rc-acronym-sort') || 'az';
+  }catch(err){
+    currentSort = 'az';
+  }
+  applySortUI();
 
   const staticBaseline = buildStaticBaseline();
 
@@ -529,6 +568,16 @@ document.querySelectorAll('.theme-opt[data-theme]').forEach(opt=>{
     applyTheme(currentTheme);
     await persistTheme(currentTheme);
     closeSheet();
+  });
+});
+
+document.querySelectorAll('.theme-opt[data-sort]').forEach(opt=>{
+  opt.addEventListener('click', ()=>{
+    currentSort = opt.dataset.sort;
+    applySortUI();
+    persistSort(currentSort);
+    closeSheet();
+    render();
   });
 });
 
