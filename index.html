@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- RC Acronyms — Version 1.0.1 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -51,6 +52,8 @@
     padding:6px 10px; cursor:pointer; border-radius:8px; line-height:1;
   }
   .dots-btn:active{ background: var(--card); }
+  .dots-wrap{ display:flex; flex-direction:column; align-items:center; }
+  .header-version{ font-size:9px; color:var(--sub); margin-top:-2px; }
 
   main{ flex:1; padding: 14px 16px 40px; }
 
@@ -183,7 +186,10 @@
           <div class="sub" id="entryCountLabel">loading…</div>
         </div>
       </div>
-      <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
+      <div class="dots-wrap">
+        <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
+        <div class="header-version">v1.0.1</div>
+      </div>
     </div>
     <div class="search-wrap">
       <div class="search-input-wrap">
@@ -236,7 +242,7 @@
   <div class="theme-opt" id="adminRow">
     <div class="theme-name" id="adminRowLabel" style="color:#fff;">Log in as Admin</div>
   </div>
-  <div class="app-version">v1.0.0</div>
+  <div class="app-version">v1.0.1</div>
 </div>
 
 <div class="modal-overlay" id="loginModalOverlay">
