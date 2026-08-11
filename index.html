@@ -337,8 +337,8 @@ function render(){
   });
   list = list.sort((a,b)=>{
     if (!!isFav(b) !== !!isFav(a)) return (isFav(b)?1:0) - (isFav(a)?1:0);
-    if (queries.length === 0) return 0;
     const at = normalize(a.term), bt = normalize(b.term);
+    if (queries.length === 0) return at.localeCompare(bt);
     const scoreFor = (t) => {
       let best = 3;
       qTerms.forEach(q=>{
