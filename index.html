@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RC Acronyms — Version 1.0.2 -->
+<!-- RC Acronyms — Version 1.0.3 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -103,7 +103,7 @@
   .entry-actions-top{ display:flex; align-items:center; gap:10px; }
   .del, .edit-btn{ background:none; border:none; color:var(--sub); font-size:12px; cursor:pointer; padding:2px 4px; }
   .edit-btn{ color: var(--accent); }
-  .def{ font-size:14px; color: var(--fg); opacity:.92; margin-top:6px; line-height:1.4; }
+  .def{ font-size:14px; color: var(--fg); opacity:.92; margin-top:6px; line-height:1.4; white-space:pre-wrap; }
   .links{ margin-top:8px; display:flex; flex-wrap:wrap; gap:8px; }
   .links a{ font-size:12.5px; color: var(--accent); text-decoration:none; border-bottom:1px solid currentColor; }
 
@@ -189,7 +189,7 @@
       </div>
       <div class="dots-wrap">
         <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
-        <div class="header-version">v1.0.2</div>
+        <div class="header-version">v1.0.3</div>
       </div>
     </div>
     <div class="search-wrap">
@@ -243,7 +243,7 @@
   <div class="theme-opt" id="adminRow">
     <div class="theme-name" id="adminRowLabel" style="color:#fff;">Log in as Admin</div>
   </div>
-  <div class="app-version">v1.0.2</div>
+  <div class="app-version">v1.0.3</div>
 </div>
 
 <div class="modal-overlay" id="loginModalOverlay">
@@ -265,7 +265,7 @@
     <input id="fTerm" type="text" placeholder="e.g. RC" />
     <div class="field-label">Definition</div>
     <textarea id="fDef" placeholder="e.g. Red Cross"></textarea>
-    <div class="field-hint">Tip: press Enter for a new line, wrap **a word** in double asterisks to bold it</div>
+    <div class="field-hint">Tip: Enter for a new line, start a line with "- " for a bullet, use spaces to indent, wrap **a word** in double asterisks to bold it</div>
     <div class="field-label">Link (optional)</div>
     <input id="fLink" type="text" placeholder="https://…" />
     <div class="modal-actions">
@@ -469,10 +469,14 @@ function escapeHtml(s){
 function escapeAttr(s){ return escapeHtml(s); }
 
 function formatDef(s){
-  // Escape first for safety, then apply line breaks and **bold** on top of the escaped (safe) text.
-  return escapeHtml(s)
-    .replace(/\n/g, '<br>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Escape first for safety. CSS white-space:pre-wrap handles line breaks and
+  // indentation (spaces) natively, so we only need to convert bullet markers and bold.
+  const escaped = escapeHtml(s || '');
+  const withBullets = escaped
+    .split('\n')
+    .map(line => line.replace(/^(\s*)-\s+/, '$1• '))
+    .join('\n');
+  return withBullets.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
 async function apiPost(action, payload){
