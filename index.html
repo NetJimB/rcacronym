@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RC Acronyms — Version 1.0.1 -->
+<!-- RC Acronyms — Version 1.0.2 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -161,6 +161,7 @@
   }
   .modal h2{ font-size:16px; margin:0 0 14px; }
   .field-label{ font-size:12px; color:var(--sub); margin: 12px 0 6px; }
+  .field-hint{ font-size:11px; color:var(--sub); margin: 6px 2px 0; opacity:.8; }
   .field-label:first-of-type{ margin-top:0; }
   .modal input, .modal textarea{
     width:100%; background: var(--bg); color: var(--fg);
@@ -188,7 +189,7 @@
       </div>
       <div class="dots-wrap">
         <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
-        <div class="header-version">v1.0.1</div>
+        <div class="header-version">v1.0.2</div>
       </div>
     </div>
     <div class="search-wrap">
@@ -242,7 +243,7 @@
   <div class="theme-opt" id="adminRow">
     <div class="theme-name" id="adminRowLabel" style="color:#fff;">Log in as Admin</div>
   </div>
-  <div class="app-version">v1.0.1</div>
+  <div class="app-version">v1.0.2</div>
 </div>
 
 <div class="modal-overlay" id="loginModalOverlay">
@@ -264,6 +265,7 @@
     <input id="fTerm" type="text" placeholder="e.g. RC" />
     <div class="field-label">Definition</div>
     <textarea id="fDef" placeholder="e.g. Red Cross"></textarea>
+    <div class="field-hint">Tip: press Enter for a new line, wrap **a word** in double asterisks to bold it</div>
     <div class="field-label">Link (optional)</div>
     <input id="fLink" type="text" placeholder="https://…" />
     <div class="modal-actions">
@@ -420,7 +422,7 @@ function render(){
           ${isAdmin ? `<button class="edit-btn" data-idx="${realIdx}">edit</button>` : ''}
         </div>
       </div>
-      <div class="def">${escapeHtml(e.def)}</div>
+      <div class="def">${formatDef(e.def)}</div>
       ${linksHtml ? `<div class="links">${linksHtml}</div>` : ''}
     `;
     container.appendChild(card);
@@ -465,6 +467,13 @@ function escapeHtml(s){
   return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function escapeAttr(s){ return escapeHtml(s); }
+
+function formatDef(s){
+  // Escape first for safety, then apply line breaks and **bold** on top of the escaped (safe) text.
+  return escapeHtml(s)
+    .replace(/\n/g, '<br>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
 
 async function apiPost(action, payload){
   try{
