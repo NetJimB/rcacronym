@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RC Acronyms — Version 1.0.3 -->
+<!-- RC Acronyms — Version 1.0.4 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -121,31 +121,43 @@
   /* Settings sheet */
   .overlay{
     position:fixed; inset:0; background: rgba(0,0,0,.55);
-    z-index:30; display:none;
+    z-index:30; opacity:0; pointer-events:none; transition: opacity .18s ease;
   }
-  .overlay.show{ display:block; }
+  .overlay.show{ opacity:1; pointer-events:auto; }
   .sheet{
-    position:fixed; right:10px; top:56px; z-index:31;
-    background: var(--card); border:1px solid var(--border);
-    border-radius:14px; width: 240px; overflow:hidden;
-    transform: translateY(-8px); opacity:0; pointer-events:none;
-    transition: all .15s ease;
+    position:fixed; left:0; right:0; bottom:0; z-index:31;
+    background: var(--card); border-top:1px solid var(--border);
+    border-radius: 18px 18px 0 0; padding: 10px 20px 26px;
+    transform: translateY(100%); transition: transform .22s ease;
   }
-  .sheet.show{ transform: translateY(0); opacity:1; pointer-events:auto; }
-  .sheet-title{ font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--sub); padding:12px 14px 4px; }
+  .sheet.show{ transform: translateY(0); }
+  .sheet-handle{ width:36px; height:4px; background: var(--border); border-radius:99px; margin: 6px auto 16px; }
+  .sheet-title{ font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--sub); margin: 14px 0 10px; }
+  .sheet-title:first-of-type{ margin-top:0; }
+
+  .theme-row{ display:flex; gap:12px; }
   .theme-opt{
-    display:flex; align-items:center; gap:10px;
-    padding:10px 14px; cursor:pointer; border-top:1px solid var(--border);
+    flex:1; border-radius:12px; border:2px solid var(--border); cursor:pointer;
+    padding:12px 0; display:flex; flex-direction:column; align-items:center; gap:8px;
   }
-  .theme-opt:active{ background: rgba(255,255,255,.06); }
-  .swatch{ width:22px; height:22px; border-radius:6px; border:1px solid rgba(255,255,255,.25); flex-shrink:0; }
-  .theme-name{ font-size:14px; }
-  .theme-check{ margin-left:auto; font-size:14px; color: var(--accent); visibility:hidden; }
-  .theme-opt.active .theme-check{ visibility:visible; }
-  .app-version{
-    text-align:center; font-size:11px; color:var(--sub);
-    padding:14px 14px 18px; border-top:1px solid var(--border); margin-top:4px;
+  .theme-opt.active{ border-color: var(--accent); }
+  .swatch{ width:34px; height:34px; border-radius:50%; border:1px solid rgba(255,255,255,.25); }
+  .theme-opt span{ font-size:11.5px; color: var(--sub); }
+
+  .sort-chips{ display:flex; gap:8px; flex-wrap:wrap; }
+  .sort-chip{
+    padding:8px 14px; border-radius:999px; border:1px solid var(--border);
+    background: var(--bg); color: var(--sub); font-size:13px; cursor:pointer;
   }
+  .sort-chip.active{ background: var(--accent); border-color: var(--accent); color:#000; font-weight:600; }
+
+  .admin-btn{
+    width:100%; padding:11px 0; border-radius:10px; border:1px solid var(--border);
+    background: var(--bg); color: var(--fg); font-size:14px; cursor:pointer;
+  }
+  .admin-btn:active{ border-color: var(--accent); }
+
+  .app-version{ text-align:center; font-size:11.5px; color: var(--sub); margin-top:20px; }
 
   /* Add entry modal */
   .modal-overlay{
@@ -189,7 +201,7 @@
       </div>
       <div class="dots-wrap">
         <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
-        <div class="header-version">v1.0.3</div>
+        <div class="header-version">v1.0.4</div>
       </div>
     </div>
     <div class="search-wrap">
@@ -210,40 +222,34 @@
 
 <div class="overlay" id="overlay"></div>
 <div class="sheet" id="sheet">
-  <div class="sheet-title">Background</div>
-  <div class="theme-opt" data-theme="black">
-    <div class="swatch" style="background:#000;"></div>
-    <div class="theme-name" style="color:#fff;">Black / White</div>
-    <div class="theme-check">✓</div>
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Background theme</div>
+  <div class="theme-row">
+    <div class="theme-opt" data-theme="black">
+      <div class="swatch" style="background:#000;"></div>
+      <span>Black</span>
+    </div>
+    <div class="theme-opt" data-theme="blue">
+      <div class="swatch" style="background:#0b3d91;"></div>
+      <span>Blue</span>
+    </div>
+    <div class="theme-opt" data-theme="white">
+      <div class="swatch" style="background:#fff;"></div>
+      <span>White</span>
+    </div>
   </div>
-  <div class="theme-opt" data-theme="blue">
-    <div class="swatch" style="background:#0b3d91;"></div>
-    <div class="theme-name" style="color:#e6e6e6;">Blue / Yellow</div>
-    <div class="theme-check">✓</div>
+
+  <div class="sheet-title">Sort order</div>
+  <div class="sort-chips">
+    <div class="sort-chip" data-sort="az">A → Z</div>
+    <div class="sort-chip" data-sort="za">Z → A</div>
+    <div class="sort-chip" data-sort="az-fav">Favorites first</div>
   </div>
-  <div class="theme-opt" data-theme="white">
-    <div class="swatch" style="background:#fff; border-color:#ccc;"></div>
-    <div class="theme-name" style="color:#e6e6e6;">White / Black</div>
-    <div class="theme-check">✓</div>
-  </div>
-  <div class="sheet-title" style="border-top:1px solid var(--border); margin-top:4px; padding-top:12px;">Sort</div>
-  <div class="theme-opt" data-sort="az">
-    <div class="theme-name" style="color:#fff;">A → Z</div>
-    <div class="theme-check">✓</div>
-  </div>
-  <div class="theme-opt" data-sort="za">
-    <div class="theme-name" style="color:#fff;">Z → A</div>
-    <div class="theme-check">✓</div>
-  </div>
-  <div class="theme-opt" data-sort="az-fav">
-    <div class="theme-name" style="color:#fff;">A → Z (Favorites first)</div>
-    <div class="theme-check">✓</div>
-  </div>
-  <div class="sheet-title" style="border-top:1px solid var(--border); margin-top:4px; padding-top:12px;">Admin</div>
-  <div class="theme-opt" id="adminRow">
-    <div class="theme-name" id="adminRowLabel" style="color:#fff;">Log in as Admin</div>
-  </div>
-  <div class="app-version">v1.0.3</div>
+
+  <div class="sheet-title">Admin</div>
+  <button class="admin-btn" id="adminRow">Log in as Admin</button>
+
+  <div class="app-version">RC Acronyms v1.0.4</div>
 </div>
 
 <div class="modal-overlay" id="loginModalOverlay">
@@ -336,7 +342,7 @@ function applyTheme(name){
 }
 
 function applySortUI(){
-  document.querySelectorAll('.theme-opt[data-sort]').forEach(o=>{
+  document.querySelectorAll('.sort-chip[data-sort]').forEach(o=>{
     o.classList.toggle('active', o.dataset.sort === currentSort);
   });
 }
@@ -590,7 +596,7 @@ document.querySelectorAll('.theme-opt[data-theme]').forEach(opt=>{
   });
 });
 
-document.querySelectorAll('.theme-opt[data-sort]').forEach(opt=>{
+document.querySelectorAll('.sort-chip[data-sort]').forEach(opt=>{
   opt.addEventListener('click', ()=>{
     currentSort = opt.dataset.sort;
     applySortUI();
@@ -693,7 +699,7 @@ el('saveBtn').addEventListener('click', async ()=>{
 
 // Admin login
 function updateAdminRow(){
-  el('adminRowLabel').textContent = isAdmin ? 'Log out (Admin)' : 'Log in as Admin';
+  el('adminRow').textContent = isAdmin ? 'Log out (Admin)' : 'Log in as Admin';
 }
 el('adminRow').addEventListener('click', ()=>{
   closeSheet();
