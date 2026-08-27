@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RC Acronyms — Version 1.0.6 -->
+<!-- RC Acronyms — Version 1.0.7 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -210,7 +210,7 @@
       </div>
       <div class="dots-wrap">
         <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
-        <div class="header-version">v1.0.6</div>
+        <div class="header-version">v1.0.7</div>
       </div>
     </div>
     <div class="search-wrap">
@@ -258,8 +258,9 @@
 
   <div class="sheet-title">Admin</div>
   <button class="admin-btn" id="adminRow">Log in as Admin</button>
+  <button class="admin-btn" id="backfillBtn" style="display:none; margin-top:8px;">Backfill missing dates with today</button>
 
-  <div class="app-version">RC Acronyms v1.0.6</div>
+  <div class="app-version">RC Acronyms v1.0.7</div>
 </div>
 
 <div class="modal-overlay" id="loginModalOverlay">
@@ -736,6 +737,7 @@ el('saveBtn').addEventListener('click', async ()=>{
 // Admin login
 function updateAdminRow(){
   el('adminRow').textContent = isAdmin ? 'Log out (Admin)' : 'Log in as Admin';
+  el('backfillBtn').style.display = isAdmin ? 'block' : 'none';
 }
 el('adminRow').addEventListener('click', ()=>{
   closeSheet();
@@ -773,6 +775,22 @@ el('loginSaveBtn').addEventListener('click', attemptLogin);
 el('fPassword').addEventListener('keydown', (e)=>{
   if (e.key === 'Enter') attemptLogin();
 });
+
+el('backfillBtn').addEventListener('click', async ()=>{
+  el('backfillBtn').disabled = true;
+  el('backfillBtn').textContent = 'Backfilling…';
+  const result = await apiPost('backfillDates', {});
+  el('backfillBtn').disabled = false;
+  el('backfillBtn').textContent = 'Backfill missing dates with today';
+  if (result && result.ok){
+    alert(`Stamped ${result.count} ${result.count === 1 ? 'entry' : 'entries'} with today's date.`);
+    closeSheet();
+    await loadData();
+  } else {
+    alert('Backfill failed — check your connection and try again.');
+  }
+});
+
 updateAdminRow();
 
 loadData();
