@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RC Acronyms — Version 1.0.8 -->
+<!-- RC Acronyms — Version 1.0.9 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -190,6 +190,22 @@
     font-size:12px; padding:5px 10px; border-radius:8px; cursor:pointer; margin-top:8px;
   }
   .insert-link-btn:active{ background: rgba(255,255,255,.06); }
+
+  .cheat-btn{
+    width:22px; height:22px; border-radius:50%; border:1px solid var(--border);
+    background:none; color: var(--sub); font-size:12px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; padding:0; line-height:1;
+  }
+  .cheat-btn:active{ border-color: var(--accent); color: var(--accent); }
+  .cheat-row{ padding:12px 0; border-top:1px solid var(--border); }
+  .cheat-row:first-of-type{ border-top:none; padding-top:4px; }
+  .cheat-label{ font-size:12px; color:var(--sub); text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; }
+  .cheat-code{
+    font-family: "SFMono-Regular", Consolas, "Courier New", monospace;
+    font-size:13px; background: var(--bg); border:1px solid var(--border);
+    border-radius:6px; padding:6px 10px; color: var(--fg); word-break:break-word;
+  }
+  .cheat-preview{ font-size:14px; color: var(--fg); margin-top:8px; }
   .field-label:first-of-type{ margin-top:0; }
   .modal input, .modal textarea{
     width:100%; background: var(--bg); color: var(--fg);
@@ -217,7 +233,7 @@
       </div>
       <div class="dots-wrap">
         <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
-        <div class="header-version">v1.0.8</div>
+        <div class="header-version">v1.0.9</div>
       </div>
     </div>
     <div class="search-wrap">
@@ -267,7 +283,7 @@
   <button class="admin-btn" id="adminRow">Log in as Admin</button>
   <button class="admin-btn" id="backfillBtn" style="display:none; margin-top:8px;">Backfill missing dates with today</button>
 
-  <div class="app-version">RC Acronyms v1.0.8</div>
+  <div class="app-version">RC Acronyms v1.0.9</div>
 </div>
 
 <div class="modal-overlay" id="loginModalOverlay">
@@ -282,12 +298,49 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="cheatOverlay">
+  <div class="modal">
+    <h2>Formatting cheatsheet</h2>
+    <div class="cheat-row">
+      <div class="cheat-label">Bold</div>
+      <div class="cheat-code">**Cross**</div>
+      <div class="cheat-preview">→ <strong>Cross</strong></div>
+    </div>
+    <div class="cheat-row">
+      <div class="cheat-label">New line</div>
+      <div class="cheat-code">Press Enter</div>
+      <div class="cheat-preview">→ starts a new line, just like this</div>
+    </div>
+    <div class="cheat-row">
+      <div class="cheat-label">Bullet point</div>
+      <div class="cheat-code">- Item one</div>
+      <div class="cheat-preview">→ • Item one</div>
+    </div>
+    <div class="cheat-row">
+      <div class="cheat-label">Indent</div>
+      <div class="cheat-code">(spaces at line start)</div>
+      <div class="cheat-preview">→ &nbsp;&nbsp;&nbsp;&nbsp;indented text</div>
+    </div>
+    <div class="cheat-row">
+      <div class="cheat-label">Inline link</div>
+      <div class="cheat-code">[Red Cross site](https://www.redcross.org)</div>
+      <div class="cheat-preview">→ <a href="#" class="def-link" onclick="return false;">Red Cross site</a></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-save" id="cheatCloseBtn" style="flex:1;">Got it</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <h2 id="modalTitle">Add acronym</h2>
     <div class="field-label">Acronym</div>
     <input id="fTerm" type="text" placeholder="e.g. RC" />
-    <div class="field-label">Definition</div>
+    <div class="field-label" style="display:flex; align-items:center; justify-content:space-between;">
+      <span>Definition</span>
+      <button type="button" class="cheat-btn" id="cheatBtn" title="Formatting help" aria-label="Formatting help">?</button>
+    </div>
     <textarea id="fDef" placeholder="e.g. Red Cross"></textarea>
     <button type="button" class="insert-link-btn" id="insertLinkBtn">+ Insert link</button>
     <div class="field-hint">Tip: Enter for a new line, start a line with "- " for a bullet, use spaces to indent, wrap **a word** in double asterisks to bold it, use the button above to add an inline link</div>
@@ -787,6 +840,16 @@ function attemptLogin(){
 el('loginSaveBtn').addEventListener('click', attemptLogin);
 el('fPassword').addEventListener('keydown', (e)=>{
   if (e.key === 'Enter') attemptLogin();
+});
+
+el('cheatBtn').addEventListener('click', ()=>{
+  el('cheatOverlay').classList.add('show');
+});
+el('cheatCloseBtn').addEventListener('click', ()=>{
+  el('cheatOverlay').classList.remove('show');
+});
+el('cheatOverlay').addEventListener('click', (e)=>{
+  if (e.target === el('cheatOverlay')) el('cheatOverlay').classList.remove('show');
 });
 
 el('insertLinkBtn').addEventListener('click', ()=>{
