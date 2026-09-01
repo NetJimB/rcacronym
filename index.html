@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RC Acronyms — Version 1.0.7 -->
+<!-- RC Acronyms — Version 1.0.8 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -115,6 +115,8 @@
   .links{ margin-top:8px; display:flex; flex-wrap:wrap; gap:8px; }
   .links a{ font-size:12.5px; color: var(--accent); text-decoration:none; border-bottom:1px solid currentColor; }
   .entry-date{ font-size:10.5px; color: var(--sub); margin-top:8px; opacity:.75; }
+  .def-link{ color:#3b82f6; text-decoration:underline; }
+  .def-link:visited{ color:#3b82f6; }
 
   .empty{ text-align:center; color:var(--sub); padding: 60px 20px; font-size:14px; line-height:1.5; }
 
@@ -183,6 +185,11 @@
   .modal h2{ font-size:16px; margin:0 0 14px; }
   .field-label{ font-size:12px; color:var(--sub); margin: 12px 0 6px; }
   .field-hint{ font-size:11px; color:var(--sub); margin: 6px 2px 0; opacity:.8; }
+  .insert-link-btn{
+    background:none; border:1px solid var(--border); color: var(--accent);
+    font-size:12px; padding:5px 10px; border-radius:8px; cursor:pointer; margin-top:8px;
+  }
+  .insert-link-btn:active{ background: rgba(255,255,255,.06); }
   .field-label:first-of-type{ margin-top:0; }
   .modal input, .modal textarea{
     width:100%; background: var(--bg); color: var(--fg);
@@ -210,7 +217,7 @@
       </div>
       <div class="dots-wrap">
         <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
-        <div class="header-version">v1.0.7</div>
+        <div class="header-version">v1.0.8</div>
       </div>
     </div>
     <div class="search-wrap">
@@ -260,7 +267,7 @@
   <button class="admin-btn" id="adminRow">Log in as Admin</button>
   <button class="admin-btn" id="backfillBtn" style="display:none; margin-top:8px;">Backfill missing dates with today</button>
 
-  <div class="app-version">RC Acronyms v1.0.7</div>
+  <div class="app-version">RC Acronyms v1.0.8</div>
 </div>
 
 <div class="modal-overlay" id="loginModalOverlay">
@@ -282,7 +289,8 @@
     <input id="fTerm" type="text" placeholder="e.g. RC" />
     <div class="field-label">Definition</div>
     <textarea id="fDef" placeholder="e.g. Red Cross"></textarea>
-    <div class="field-hint">Tip: Enter for a new line, start a line with "- " for a bullet, use spaces to indent, wrap **a word** in double asterisks to bold it</div>
+    <button type="button" class="insert-link-btn" id="insertLinkBtn">+ Insert link</button>
+    <div class="field-hint">Tip: Enter for a new line, start a line with "- " for a bullet, use spaces to indent, wrap **a word** in double asterisks to bold it, use the button above to add an inline link</div>
     <div class="field-label">Link (optional)</div>
     <input id="fLink" type="text" placeholder="https://…" />
     <div class="modal-actions">
@@ -512,13 +520,18 @@ function escapeAttr(s){ return escapeHtml(s); }
 
 function formatDef(s){
   // Escape first for safety. CSS white-space:pre-wrap handles line breaks and
-  // indentation (spaces) natively, so we only need to convert bullet markers and bold.
+  // indentation (spaces) natively, so we only need to convert bullet markers,
+  // inline links, and bold.
   const escaped = escapeHtml(s || '');
   const withBullets = escaped
     .split('\n')
     .map(line => line.replace(/^(\s*)-\s+/, '$1• '))
     .join('\n');
-  return withBullets.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  const withLinks = withBullets.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener" class="def-link">$1</a>'
+  );
+  return withLinks.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
 async function apiPost(action, payload){
@@ -774,6 +787,20 @@ function attemptLogin(){
 el('loginSaveBtn').addEventListener('click', attemptLogin);
 el('fPassword').addEventListener('keydown', (e)=>{
   if (e.key === 'Enter') attemptLogin();
+});
+
+el('insertLinkBtn').addEventListener('click', ()=>{
+  const linkText = prompt('Link text (what the reader sees):');
+  if (!linkText) return;
+  const url = prompt('URL (e.g. https://example.com):');
+  if (!url) return;
+  const ta = el('fDef');
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const insertion = `[${linkText}](${url})`;
+  ta.value = ta.value.slice(0, start) + insertion + ta.value.slice(end);
+  ta.focus();
+  const pos = start + insertion.length;
+  ta.selectionStart = ta.selectionEnd = pos;
 });
 
 el('backfillBtn').addEventListener('click', async ()=>{
