@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RC Acronyms — Version 1.0.9 -->
+<!-- RC Acronyms — Version 1.0.11 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -233,7 +233,7 @@
       </div>
       <div class="dots-wrap">
         <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
-        <div class="header-version">v1.0.9</div>
+        <div class="header-version">v1.0.11</div>
       </div>
     </div>
     <div class="search-wrap">
@@ -283,7 +283,7 @@
   <button class="admin-btn" id="adminRow">Log in as Admin</button>
   <button class="admin-btn" id="backfillBtn" style="display:none; margin-top:8px;">Backfill missing dates with today</button>
 
-  <div class="app-version">RC Acronyms v1.0.9</div>
+  <div class="app-version">RC Acronyms v1.0.11</div>
 </div>
 
 <div class="modal-overlay" id="loginModalOverlay">
@@ -571,6 +571,13 @@ function escapeHtml(s){
 }
 function escapeAttr(s){ return escapeHtml(s); }
 
+function stripExtensionPrefix(text){
+  // Chrome's built-in PDF viewer prepends its own extension URL when you copy a
+  // link while viewing a PDF (e.g. chrome-extension://efaidn.../https://real-site.com/...).
+  // Strip that prefix wherever it appears, leaving the real URL intact.
+  return (text || '').replace(/chrome-extension:\/\/[a-z0-9]+\/(https?:\/\/)/gi, '$1');
+}
+
 function formatDef(s){
   // Escape first for safety. CSS white-space:pre-wrap handles line breaks and
   // indentation (spaces) natively, so we only need to convert bullet markers,
@@ -581,7 +588,7 @@ function formatDef(s){
     .map(line => line.replace(/^(\s*)-\s+/, '$1• '))
     .join('\n');
   const withLinks = withBullets.replace(
-    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    /\[([^\]]+)\]\((?:chrome-extension:\/\/[a-z0-9]+\/)?(https?:\/\/[^\s)]+)\)/gi,
     '<a href="$2" target="_blank" rel="noopener" class="def-link">$1</a>'
   );
   return withLinks.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -852,11 +859,26 @@ el('cheatOverlay').addEventListener('click', (e)=>{
   if (e.target === el('cheatOverlay')) el('cheatOverlay').classList.remove('show');
 });
 
+function handleCleanPaste(inputEl, e){
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  if (!text) return;
+  const cleaned = stripExtensionPrefix(text);
+  if (cleaned === text) return; // nothing to clean, let the default paste happen
+  e.preventDefault();
+  const start = inputEl.selectionStart, end = inputEl.selectionEnd;
+  inputEl.value = inputEl.value.slice(0, start) + cleaned + inputEl.value.slice(end);
+  const pos = start + cleaned.length;
+  inputEl.selectionStart = inputEl.selectionEnd = pos;
+}
+el('fDef').addEventListener('paste', (e)=> handleCleanPaste(el('fDef'), e));
+el('fLink').addEventListener('paste', (e)=> handleCleanPaste(el('fLink'), e));
+
 el('insertLinkBtn').addEventListener('click', ()=>{
   const linkText = prompt('Link text (what the reader sees):');
   if (!linkText) return;
-  const url = prompt('URL (e.g. https://example.com):');
-  if (!url) return;
+  const rawUrl = prompt('URL (e.g. https://example.com):');
+  if (!rawUrl) return;
+  const url = stripExtensionPrefix(rawUrl);
   const ta = el('fDef');
   const start = ta.selectionStart, end = ta.selectionEnd;
   const insertion = `[${linkText}](${url})`;
