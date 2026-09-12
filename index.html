@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RC Acronyms — Version 1.0.11 -->
+<!-- RC Acronyms — Version 1.0.12 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -206,6 +206,21 @@
     border-radius:6px; padding:6px 10px; color: var(--fg); word-break:break-word;
   }
   .cheat-preview{ font-size:14px; color: var(--fg); margin-top:8px; }
+
+  .recovery-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 0; border-top:1px solid var(--border);
+  }
+  .recovery-row:first-child{ border-top:none; }
+  .recovery-info{ min-width:0; }
+  .recovery-term{ font-size:15px; font-weight:700; }
+  .recovery-meta{ font-size:11.5px; color: var(--sub); margin-top:2px; }
+  .restore-btn{
+    flex-shrink:0; padding:7px 14px; border-radius:8px; border:1px solid var(--accent);
+    background:none; color: var(--accent); font-size:13px; cursor:pointer;
+  }
+  .restore-btn:active{ background: rgba(255,255,255,.08); }
+  .recovery-empty{ font-size:13.5px; color: var(--sub); padding:16px 0; text-align:center; }
   .field-label:first-of-type{ margin-top:0; }
   .modal input, .modal textarea{
     width:100%; background: var(--bg); color: var(--fg);
@@ -233,7 +248,7 @@
       </div>
       <div class="dots-wrap">
         <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
-        <div class="header-version">v1.0.11</div>
+        <div class="header-version">v1.0.12</div>
       </div>
     </div>
     <div class="search-wrap">
@@ -282,8 +297,9 @@
   <div class="sheet-title">Admin</div>
   <button class="admin-btn" id="adminRow">Log in as Admin</button>
   <button class="admin-btn" id="backfillBtn" style="display:none; margin-top:8px;">Backfill missing dates with today</button>
+  <button class="admin-btn" id="recoveryBtn" style="display:none; margin-top:8px;">Recently removed</button>
 
-  <div class="app-version">RC Acronyms v1.0.11</div>
+  <div class="app-version">RC Acronyms v1.0.12</div>
 </div>
 
 <div class="modal-overlay" id="loginModalOverlay">
@@ -328,6 +344,16 @@
     </div>
     <div class="modal-actions">
       <button class="btn btn-save" id="cheatCloseBtn" style="flex:1;">Got it</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="recoveryOverlay">
+  <div class="modal">
+    <h2>Recently removed</h2>
+    <div id="recoveryList"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" id="recoveryCloseBtn" style="flex:1;">Close</button>
     </div>
   </div>
 </div>
@@ -811,6 +837,7 @@ el('saveBtn').addEventListener('click', async ()=>{
 function updateAdminRow(){
   el('adminRow').textContent = isAdmin ? 'Log out (Admin)' : 'Log in as Admin';
   el('backfillBtn').style.display = isAdmin ? 'block' : 'none';
+  el('recoveryBtn').style.display = isAdmin ? 'block' : 'none';
 }
 el('adminRow').addEventListener('click', ()=>{
   closeSheet();
@@ -901,6 +928,60 @@ el('backfillBtn').addEventListener('click', async ()=>{
   } else {
     alert('Backfill failed — check your connection and try again.');
   }
+});
+
+function renderRecoveryList(deletedEntries){
+  const container = el('recoveryList');
+  if (!deletedEntries || deletedEntries.length === 0){
+    container.innerHTML = '<div class="recovery-empty">Nothing here — no removed entries.</div>';
+    return;
+  }
+  container.innerHTML = deletedEntries.map(d => `
+    <div class="recovery-row">
+      <div class="recovery-info">
+        <div class="recovery-term">${escapeHtml(d.term)}</div>
+        <div class="recovery-meta">Removed ${d.deletedAt ? formatDate(d.deletedAt) : 'recently'}</div>
+      </div>
+      <button class="restore-btn" data-id="${escapeAttr(d.id)}">Restore</button>
+    </div>
+  `).join('');
+  container.querySelectorAll('.restore-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      btn.disabled = true;
+      btn.textContent = '…';
+      const result = await apiPost('restore', { id: btn.dataset.id });
+      if (result && result.ok){
+        await loadData();
+        await openRecoveryPanel();
+      } else {
+        alert('Restore failed — check your connection and try again.');
+        btn.disabled = false;
+        btn.textContent = 'Restore';
+      }
+    });
+  });
+}
+
+async function openRecoveryPanel(){
+  el('recoveryList').innerHTML = '<div class="recovery-empty">Loading…</div>';
+  el('recoveryOverlay').classList.add('show');
+  const result = await apiPost('listDeleted', {});
+  if (result && result.ok){
+    renderRecoveryList(result.deletedEntries);
+  } else {
+    el('recoveryList').innerHTML = '<div class="recovery-empty">Could not load — check your connection.</div>';
+  }
+}
+
+el('recoveryBtn').addEventListener('click', ()=>{
+  closeSheet();
+  openRecoveryPanel();
+});
+el('recoveryCloseBtn').addEventListener('click', ()=>{
+  el('recoveryOverlay').classList.remove('show');
+});
+el('recoveryOverlay').addEventListener('click', (e)=>{
+  if (e.target === el('recoveryOverlay')) el('recoveryOverlay').classList.remove('show');
 });
 
 updateAdminRow();
