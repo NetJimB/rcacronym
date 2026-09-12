@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RC Acronyms — Version 1.0.12 -->
+<!-- RC Acronyms — Version 1.0.13 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -248,7 +248,7 @@
       </div>
       <div class="dots-wrap">
         <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
-        <div class="header-version">v1.0.12</div>
+        <div class="header-version">v1.0.13</div>
       </div>
     </div>
     <div class="search-wrap">
@@ -299,7 +299,7 @@
   <button class="admin-btn" id="backfillBtn" style="display:none; margin-top:8px;">Backfill missing dates with today</button>
   <button class="admin-btn" id="recoveryBtn" style="display:none; margin-top:8px;">Recently removed</button>
 
-  <div class="app-version">RC Acronyms v1.0.12</div>
+  <div class="app-version">RC Acronyms v1.0.13</div>
 </div>
 
 <div class="modal-overlay" id="loginModalOverlay">
@@ -421,6 +421,7 @@ let isAdmin = false;
 let favoriteTerms = new Set();
 let removedTerms = new Set();
 let expandedKeys = new Set();
+let staticBaselineCache = [];
 const ADMIN_PASSWORD = 'admin'; // must match the ADMIN_PASSWORD env var on the Lambda function
 const API_URL = 'https://j5hx2fj509.execute-api.us-west-1.amazonaws.com/entries';
 
@@ -692,6 +693,7 @@ async function loadData(){
   applySortUI();
 
   const staticBaseline = buildStaticBaseline();
+  staticBaselineCache = staticBaseline;
 
   // Show the static reference list immediately so the app isn't blank while the network call is in flight.
   entries = staticBaseline.map(e => Object.assign({}, e, { src:'static' }));
@@ -930,26 +932,49 @@ el('backfillBtn').addEventListener('click', async ()=>{
   }
 });
 
-function renderRecoveryList(deletedEntries){
+function renderRecoveryList(deletedEntries, hiddenStatic){
   const container = el('recoveryList');
-  if (!deletedEntries || deletedEntries.length === 0){
+  const hasDeleted = deletedEntries && deletedEntries.length > 0;
+  const hasHidden = hiddenStatic && hiddenStatic.length > 0;
+
+  if (!hasDeleted && !hasHidden){
     container.innerHTML = '<div class="recovery-empty">Nothing here — no removed entries.</div>';
     return;
   }
-  container.innerHTML = deletedEntries.map(d => `
-    <div class="recovery-row">
-      <div class="recovery-info">
-        <div class="recovery-term">${escapeHtml(d.term)}</div>
-        <div class="recovery-meta">Removed ${d.deletedAt ? formatDate(d.deletedAt) : 'recently'}</div>
+
+  let html = '';
+  if (hasDeleted){
+    html += '<div class="cheat-label" style="margin:8px 0 4px;">Your added/edited entries</div>';
+    html += deletedEntries.map(d => `
+      <div class="recovery-row">
+        <div class="recovery-info">
+          <div class="recovery-term">${escapeHtml(d.term)}</div>
+          <div class="recovery-meta">Removed ${d.deletedAt ? formatDate(d.deletedAt) : 'recently'}</div>
+        </div>
+        <button class="restore-btn" data-id="${escapeAttr(d.id)}">Restore</button>
       </div>
-      <button class="restore-btn" data-id="${escapeAttr(d.id)}">Restore</button>
-    </div>
-  `).join('');
+    `).join('');
+  }
+  if (hasHidden){
+    html += '<div class="cheat-label" style="margin:16px 0 4px;">Reference entries hidden</div>';
+    html += hiddenStatic.map(d => `
+      <div class="recovery-row">
+        <div class="recovery-info">
+          <div class="recovery-term">${escapeHtml(d.term)}</div>
+          <div class="recovery-meta">From the reference list</div>
+        </div>
+        <button class="restore-btn" data-term="${escapeAttr(normalize(d.term))}">Restore</button>
+      </div>
+    `).join('');
+  }
+  container.innerHTML = html;
+
   container.querySelectorAll('.restore-btn').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       btn.disabled = true;
       btn.textContent = '…';
-      const result = await apiPost('restore', { id: btn.dataset.id });
+      const payload = btn.dataset.id ? { id: btn.dataset.id } : { term: btn.dataset.term };
+      const result = await apiPost('restore', payload);
       if (result && result.ok){
         await loadData();
         await openRecoveryPanel();
@@ -966,8 +991,9 @@ async function openRecoveryPanel(){
   el('recoveryList').innerHTML = '<div class="recovery-empty">Loading…</div>';
   el('recoveryOverlay').classList.add('show');
   const result = await apiPost('listDeleted', {});
+  const hiddenStatic = staticBaselineCache.filter(e => removedTerms.has(normalize(e.term)));
   if (result && result.ok){
-    renderRecoveryList(result.deletedEntries);
+    renderRecoveryList(result.deletedEntries, hiddenStatic);
   } else {
     el('recoveryList').innerHTML = '<div class="recovery-empty">Could not load — check your connection.</div>';
   }
