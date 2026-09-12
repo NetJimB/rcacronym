@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RC Acronyms — Version 1.0.14 -->
+<!-- RC Acronyms — Version 1.0.15 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -248,7 +248,7 @@
       </div>
       <div class="dots-wrap">
         <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
-        <div class="header-version">v1.0.14</div>
+        <div class="header-version">v1.0.15</div>
       </div>
     </div>
     <div class="search-wrap">
@@ -298,8 +298,9 @@
   <button class="admin-btn" id="adminRow">Log in as Admin</button>
   <button class="admin-btn" id="backfillBtn" style="display:none; margin-top:8px;">Backfill missing dates with today</button>
   <button class="admin-btn" id="recoveryBtn" style="display:none; margin-top:8px;">Recently removed</button>
+  <button class="admin-btn" id="changePwBtn" style="display:none; margin-top:8px;">Change admin password</button>
 
-  <div class="app-version">RC Acronyms v1.0.14</div>
+  <div class="app-version">RC Acronyms v1.0.15</div>
 </div>
 
 <div class="modal-overlay" id="loginModalOverlay">
@@ -354,6 +355,23 @@
     <div id="recoveryList"></div>
     <div class="modal-actions">
       <button class="btn btn-cancel" id="recoveryCloseBtn" style="flex:1;">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="changePwOverlay">
+  <div class="modal">
+    <h2>Change admin password</h2>
+    <div class="field-label">Current password</div>
+    <input id="cpOld" type="password" autocomplete="off" />
+    <div class="field-label">New password</div>
+    <input id="cpNew" type="password" autocomplete="off" />
+    <div class="field-label">Confirm new password</div>
+    <input id="cpConfirm" type="password" autocomplete="off" />
+    <div class="field-hint" id="cpError" style="color:#cc1f2c; display:none;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" id="cpCancelBtn">Cancel</button>
+      <button class="btn btn-save" id="cpSaveBtn">Change</button>
     </div>
   </div>
 </div>
@@ -840,6 +858,7 @@ function updateAdminRow(){
   el('adminRow').textContent = isAdmin ? 'Log out (Admin)' : 'Log in as Admin';
   el('backfillBtn').style.display = isAdmin ? 'block' : 'none';
   el('recoveryBtn').style.display = isAdmin ? 'block' : 'none';
+  el('changePwBtn').style.display = isAdmin ? 'block' : 'none';
 }
 el('adminRow').addEventListener('click', ()=>{
   closeSheet();
@@ -1029,6 +1048,62 @@ el('recoveryCloseBtn').addEventListener('click', ()=>{
 });
 el('recoveryOverlay').addEventListener('click', (e)=>{
   if (e.target === el('recoveryOverlay')) el('recoveryOverlay').classList.remove('show');
+});
+
+el('changePwBtn').addEventListener('click', ()=>{
+  closeSheet();
+  el('cpOld').value = '';
+  el('cpNew').value = '';
+  el('cpConfirm').value = '';
+  el('cpError').style.display = 'none';
+  el('changePwOverlay').classList.add('show');
+  setTimeout(()=>el('cpOld').focus(), 50);
+});
+el('cpCancelBtn').addEventListener('click', ()=>{
+  el('changePwOverlay').classList.remove('show');
+});
+el('changePwOverlay').addEventListener('click', (e)=>{
+  if (e.target === el('changePwOverlay')) el('changePwOverlay').classList.remove('show');
+});
+function showCpError(msg){
+  el('cpError').textContent = msg;
+  el('cpError').style.display = 'block';
+}
+el('cpSaveBtn').addEventListener('click', async ()=>{
+  const oldPw = el('cpOld').value;
+  const newPw = el('cpNew').value;
+  const confirmPw = el('cpConfirm').value;
+  el('cpError').style.display = 'none';
+
+  if (!oldPw || !newPw || !confirmPw){ showCpError('Fill in all three fields.'); return; }
+  if (newPw !== confirmPw){ showCpError('New passwords do not match.'); return; }
+  if (newPw.length < 4){ showCpError('New password must be at least 4 characters.'); return; }
+
+  el('cpSaveBtn').disabled = true;
+  el('cpSaveBtn').textContent = 'Changing…';
+  let result;
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'changePassword', pass: oldPw, newPass: newPw })
+    });
+    result = await res.json();
+  }catch(err){
+    result = { ok:false, error:'network' };
+  }
+  el('cpSaveBtn').disabled = false;
+  el('cpSaveBtn').textContent = 'Change';
+
+  if (result && result.ok){
+    adminPassword = newPw; // keep this session authorized under the new password
+    el('changePwOverlay').classList.remove('show');
+    alert('Password changed.');
+  } else if (result && result.error === 'network'){
+    showCpError('Could not connect — try again.');
+  } else {
+    showCpError('Current password is incorrect.');
+  }
 });
 
 updateAdminRow();
