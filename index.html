@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RC Acronyms — Version 1.0.13 -->
+<!-- RC Acronyms — Version 1.0.14 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -248,7 +248,7 @@
       </div>
       <div class="dots-wrap">
         <button class="dots-btn" id="dotsBtn" aria-label="Settings">⋯</button>
-        <div class="header-version">v1.0.13</div>
+        <div class="header-version">v1.0.14</div>
       </div>
     </div>
     <div class="search-wrap">
@@ -299,7 +299,7 @@
   <button class="admin-btn" id="backfillBtn" style="display:none; margin-top:8px;">Backfill missing dates with today</button>
   <button class="admin-btn" id="recoveryBtn" style="display:none; margin-top:8px;">Recently removed</button>
 
-  <div class="app-version">RC Acronyms v1.0.13</div>
+  <div class="app-version">RC Acronyms v1.0.14</div>
 </div>
 
 <div class="modal-overlay" id="loginModalOverlay">
@@ -422,7 +422,7 @@ let favoriteTerms = new Set();
 let removedTerms = new Set();
 let expandedKeys = new Set();
 let staticBaselineCache = [];
-const ADMIN_PASSWORD = 'admin'; // must match the ADMIN_PASSWORD env var on the Lambda function
+let adminPassword = null; // set only after a successful server-side login check; never persisted
 const API_URL = 'https://j5hx2fj509.execute-api.us-west-1.amazonaws.com/entries';
 
 const el = (id) => document.getElementById(id);
@@ -626,7 +626,7 @@ async function apiPost(action, payload){
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.assign({ action, pass: ADMIN_PASSWORD }, payload))
+      body: JSON.stringify(Object.assign({ action, pass: adminPassword }, payload))
     });
     return await res.json();
   }catch(err){
@@ -845,6 +845,7 @@ el('adminRow').addEventListener('click', ()=>{
   closeSheet();
   if (isAdmin){
     isAdmin = false;
+    adminPassword = null;
     updateAdminRow();
     render();
   } else {
@@ -859,13 +860,33 @@ el('loginCancelBtn').addEventListener('click', ()=>{
 el('loginModalOverlay').addEventListener('click', (e)=>{
   if (e.target === el('loginModalOverlay')) el('loginModalOverlay').classList.remove('show');
 });
-function attemptLogin(){
+async function attemptLogin(){
   const pw = el('fPassword').value;
-  if (pw === ADMIN_PASSWORD){
+  el('loginSaveBtn').disabled = true;
+  el('loginSaveBtn').textContent = 'Checking…';
+  let result;
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'checkPassword', pass: pw })
+    });
+    result = await res.json();
+  }catch(err){
+    result = { ok:false, error:'network' };
+  }
+  el('loginSaveBtn').disabled = false;
+  el('loginSaveBtn').textContent = 'Log in';
+
+  if (result && result.ok){
+    adminPassword = pw;
     isAdmin = true;
     el('loginModalOverlay').classList.remove('show');
     updateAdminRow();
     render();
+  } else if (result && result.error === 'network'){
+    el('fPassword').placeholder = 'Could not connect — try again';
+    el('fPassword').value = '';
   } else {
     el('fPassword').style.borderColor = '#cc1f2c';
     el('fPassword').value = '';
